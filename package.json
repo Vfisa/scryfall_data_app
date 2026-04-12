@@ -1,0 +1,12 @@
+{
+  "name": "mtg-card-browser",
+  "version": "1.0.0",
+  "description": "MTG Card Browser - Keboola Data App",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  }
+}

@@ -1,2 +1,3 @@
 #!/bin/bash
-echo "Setup complete"
+set -Eeuo pipefail
+cd /app && npm install

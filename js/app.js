@@ -29,7 +29,7 @@ const App = (() => {
     } catch (err) {
       console.error('Failed to load data:', err);
       document.getElementById('loading-overlay').innerHTML =
-        `<p style="color: #d4451a;">Failed to load card data. Please check that CSV files are available.</p>`;
+        `<p style="color: #d4451a;">Failed to load card data. Please check that KBC_TOKEN and KBC_URL are configured in Data App secrets.</p>`;
     }
   }
 

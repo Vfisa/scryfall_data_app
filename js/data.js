@@ -108,8 +108,8 @@ const DataModule = (() => {
 
   async function load() {
     const [cardsRaw, snapshotsRaw] = await Promise.all([
-      loadCSV('data/in/tables/cards.csv'),
-      loadCSV('data/in/tables/cards_price_snapshot.csv'),
+      loadCSV('/api/tables/cards'),
+      loadCSV('/api/tables/snapshots'),
     ]);
 
     cards = cardsRaw.map(parseCard);
