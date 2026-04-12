@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MTG Card Browser</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Loading overlay -->
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <p>Loading card data...</p>
+  </div>
+
+  <!-- Header -->
+  <header id="app-header">
+    <h1>MTG Card Browser</h1>
+    <span id="card-count">Loading...</span>
+    <div class="header-controls">
+      <input type="text" id="search-input" placeholder="Search by name...">
+      <select id="sort-select">
+        <option value="name-asc">Name A-Z</option>
+        <option value="name-desc">Name Z-A</option>
+        <option value="price-desc">Price High-Low</option>
+        <option value="price-asc">Price Low-High</option>
+        <option value="rarity">Rarity</option>
+        <option value="collector">Collector #</option>
+      </select>
+    </div>
+  </header>
+
+  <!-- Main layout -->
+  <div id="app-body">
+
+    <!-- Sidebar filters -->
+    <aside id="filters-sidebar">
+
+      <div class="filter-section">
+        <h3>Set</h3>
+        <div id="filter-sets" class="filter-checkboxes"></div>
+      </div>
+
+      <div class="filter-section">
+        <h3>Rarity</h3>
+        <div id="filter-rarities" class="filter-checkboxes"></div>
+      </div>
+
+      <div class="filter-section">
+        <h3>Color Identity</h3>
+        <div id="filter-colors" class="color-toggles"></div>
+      </div>
+
+      <div class="filter-section">
+        <h3>Artist</h3>
+        <input type="text" id="filter-artist" class="filter-text-input"
+               list="artist-list" placeholder="Search artist...">
+        <datalist id="artist-list"></datalist>
+      </div>
+
+      <div class="filter-section">
+        <h3>Type</h3>
+        <input type="text" id="filter-type" class="filter-text-input"
+               list="type-list" placeholder="Search type...">
+        <datalist id="type-list"></datalist>
+      </div>
+
+      <div class="filter-section">
+        <div class="toggle-row">
+          <label class="toggle-switch">
+            <input type="checkbox" id="filter-full-art">
+            <span class="toggle-slider"></span>
+          </label>
+          Full Art Only
+        </div>
+        <div class="toggle-row">
+          <label class="toggle-switch">
+            <input type="checkbox" id="filter-foil">
+            <span class="toggle-slider"></span>
+          </label>
+          Foil Only
+        </div>
+      </div>
+
+      <div class="filter-section">
+        <button id="reset-filters">Reset All Filters</button>
+      </div>
+
+    </aside>
+
+    <!-- Card grid -->
+    <main id="card-grid-container">
+      <div id="card-grid"></div>
+    </main>
+
+  </div>
+
+  <!-- Card detail modal -->
+  <div id="card-modal-backdrop">
+    <div id="card-modal">
+      <button id="modal-close">&times;</button>
+      <div class="modal-content">
+        <div class="modal-image-col">
+          <img id="modal-image" src="" alt="">
+        </div>
+        <div class="modal-info-col">
+          <div id="modal-card-name" class="modal-card-name"></div>
+          <div id="modal-set-info" class="modal-set-info"></div>
+          <div id="modal-type-line" class="modal-type-line"></div>
+          <div id="modal-mana-cost" class="modal-mana-cost"></div>
+          <div id="modal-oracle-text" class="modal-oracle-text"></div>
+          <div id="modal-flavor-text" class="modal-flavor-text"></div>
+          <div id="modal-stats" class="modal-stats"></div>
+          <div id="modal-links" class="modal-links"></div>
+          <div id="modal-prices" class="modal-prices"></div>
+          <div class="modal-chart-section">
+            <h4>Price History</h4>
+            <div id="price-chart-container"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <!-- App modules -->
+  <script src="js/data.js"></script>
+  <script src="js/filters.js"></script>
+  <script src="js/grid.js"></script>
+  <script src="js/chart.js"></script>
+  <script src="js/modal.js"></script>
+  <script src="js/app.js"></script>
+
+</body>
+</html>
