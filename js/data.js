@@ -53,6 +53,8 @@ const DataModule = (() => {
       edhrec_rank: row.edhrec_rank ? parseInt(row.edhrec_rank) : null,
       released_at: row.released_at || '',
       border_color: row.border_color || '',
+      lang: row.lang || 'en',
+      frame_effects: row.frame_effects || '',
     };
   }
 

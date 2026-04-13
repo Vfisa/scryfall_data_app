@@ -85,6 +85,13 @@
             </label>
             Borderless
           </div>
+          <div class="toggle-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="filter-japanese">
+              <span class="toggle-slider"></span>
+            </label>
+            Japanese Art
+          </div>
         </div>
         <div class="filter-section">
           <button id="reset-filters">Reset All Filters</button>
@@ -129,6 +136,16 @@
             <option value="rare">Rare</option>
             <option value="mythic">Mythic</option>
           </select>
+        </div>
+        <div class="af-group">
+          <label class="af-label">Include</label>
+          <div class="af-toggles" id="af-include-toggles">
+            <button class="af-toggle active" data-key="regular">Regular</button>
+            <button class="af-toggle active" data-key="fullArt">Full Art</button>
+            <button class="af-toggle active" data-key="borderless">Borderless</button>
+            <button class="af-toggle active" data-key="foil">Foil-only</button>
+            <button class="af-toggle active" data-key="japanese">Japanese</button>
+          </div>
         </div>
       </div>
 

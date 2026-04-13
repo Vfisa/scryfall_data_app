@@ -531,6 +531,17 @@ a:hover { text-decoration: underline; color: #93c5fd; }
 .af-radio input { display: none; }
 .af-radio.active { background: var(--accent-gold); color: #121217; border-color: var(--accent-gold); }
 .af-radio:hover { border-color: var(--border-light); }
+/* Include toggles */
+.af-toggles { display: flex; gap: 4px; flex-wrap: wrap; }
+.af-toggle {
+  padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+  cursor: pointer; color: var(--text-muted); border: 1px solid var(--border);
+  background: transparent; transition: all 0.15s;
+}
+.af-toggle.active { background: var(--bg-input); color: var(--text-primary); border-color: var(--accent-gold); }
+.af-toggle:not(.active) { opacity: 0.5; text-decoration: line-through; }
+.af-toggle:hover { border-color: var(--border-light); }
+
 .af-input, .af-select {
   background: var(--bg-input); border: 1px solid var(--border);
   color: var(--text-primary); padding: 6px 10px; border-radius: 6px;
@@ -592,7 +603,7 @@ a:hover { text-decoration: underline; color: #93c5fd; }
 /* Charts */
 .chart-container-wide {
   background: var(--bg-secondary); border: 1px solid var(--border);
-  border-radius: 12px; padding: 20px; height: 320px; position: relative;
+  border-radius: 12px; padding: 20px; height: 420px; position: relative;
 }
 .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .chart-half { min-width: 0; }
@@ -632,6 +643,13 @@ a:hover { text-decoration: underline; color: #93c5fd; }
   margin-right: 4px; transition: all 0.15s;
 }
 .vt-link:hover { border-color: var(--accent-blue); text-decoration: none; background: var(--bg-hover); }
+.vt-sortable { cursor: pointer; user-select: none; transition: color 0.15s; }
+.vt-sortable:hover { color: var(--accent-gold); }
+.mover-name-link, .vt-name-link {
+  color: var(--text-primary); font-weight: 600; text-decoration: none;
+  transition: color 0.15s;
+}
+.mover-name-link:hover, .vt-name-link:hover { color: var(--accent-gold); text-decoration: underline; }
 
 /* Analytics responsive */
 @media (max-width: 900px) {

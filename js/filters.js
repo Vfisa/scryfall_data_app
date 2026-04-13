@@ -8,6 +8,7 @@ const FiltersModule = (() => {
     fullArt: false,
     foil: false,
     borderless: false,
+    japanese: false,
   };
 
   let onChangeCallback = null;
@@ -130,11 +131,15 @@ const FiltersModule = (() => {
       state.borderless = e.target.checked;
       emitChange();
     });
+    document.getElementById('filter-japanese').addEventListener('change', e => {
+      state.japanese = e.target.checked;
+      emitChange();
+    });
   }
 
   function renderResetButton() {
     document.getElementById('reset-filters').addEventListener('click', () => {
-      state = { sets: [], rarities: [], colors: [], artist: '', typeLine: '', fullArt: false, foil: false, borderless: false };
+      state = { sets: [], rarities: [], colors: [], artist: '', typeLine: '', fullArt: false, foil: false, borderless: false, japanese: false };
 
       document.querySelectorAll('#filter-sets input, #filter-rarities input').forEach(cb => cb.checked = false);
       document.querySelectorAll('.color-toggle').forEach(el => el.classList.remove('active'));
@@ -143,6 +148,7 @@ const FiltersModule = (() => {
       document.getElementById('filter-full-art').checked = false;
       document.getElementById('filter-foil').checked = false;
       document.getElementById('filter-borderless').checked = false;
+      document.getElementById('filter-japanese').checked = false;
       document.getElementById('search-input').value = '';
 
       emitChange();
@@ -188,11 +194,18 @@ const FiltersModule = (() => {
       if (state.fullArt && !card.full_art) return false;
       if (state.foil && !card.foil) return false;
       if (state.borderless && card.border_color !== 'borderless') return false;
+      if (state.japanese && card.lang !== 'ja') return false;
       if (search && !card.name.toLowerCase().includes(search)) return false;
 
       return true;
     });
   }
 
-  return { init, filterCards };
+  function setArtist(name) {
+    state.artist = name;
+    document.getElementById('filter-artist').value = name;
+    emitChange();
+  }
+
+  return { init, filterCards, setArtist };
 })();
