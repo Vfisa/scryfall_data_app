@@ -28,26 +28,60 @@ app.use(express.json());
 // --- API: fetch table data from Keboola Storage ---
 
 async function fetchTableCSV(tableId) {
-  // Use data-preview with a high limit for small tables (<10k rows)
-  const url = `${KBC_URL}/v2/storage/tables/${encodeURIComponent(tableId)}/data-preview?limit=10000&format=rfc`;
+  const headers = { 'X-StorageApi-Token': KBC_TOKEN };
 
-  console.log(`Fetching table ${tableId} from ${KBC_URL}...`);
+  // Step 1: Start async export
+  console.log(`Starting async export for ${tableId}...`);
+  const exportRes = await fetch(
+    `${KBC_URL}/v2/storage/tables/${encodeURIComponent(tableId)}/export-async`,
+    { method: 'POST', headers }
+  );
 
-  const response = await fetch(url, {
-    headers: {
-      'X-StorageApi-Token': KBC_TOKEN,
-    },
-  });
-
-  if (!response.ok) {
-    const body = await response.text();
-    console.error(`Keboola API error (${response.status}): ${body}`);
-    throw new Error(`Keboola API returned ${response.status}: ${body}`);
+  if (!exportRes.ok) {
+    const body = await exportRes.text();
+    console.error(`Async export error (${exportRes.status}): ${body}`);
+    throw new Error(`Export start failed (${exportRes.status}): ${body}`);
   }
 
-  const csvText = await response.text();
-  console.log(`Fetched ${tableId}: ${csvText.length} bytes`);
-  return csvText;
+  const exportJob = await exportRes.json();
+  const jobId = exportJob.id;
+  console.log(`Export job ${jobId} created for ${tableId}`);
+
+  // Step 2: Poll job until finished
+  const MAX_POLLS = 60;
+  const POLL_INTERVAL = 2000;
+  for (let i = 0; i < MAX_POLLS; i++) {
+    const jobRes = await fetch(`${KBC_URL}/v2/storage/jobs/${jobId}`, { headers });
+    const job = await jobRes.json();
+
+    if (job.status === 'success') {
+      console.log(`Export job ${jobId} succeeded for ${tableId}`);
+      const fileId = job.results?.file?.id;
+      if (!fileId) throw new Error(`Job succeeded but no file ID in results: ${JSON.stringify(job.results)}`);
+
+      // Step 3: Get file info and download
+      const fileRes = await fetch(`${KBC_URL}/v2/storage/files/${fileId}`, { headers });
+      const fileInfo = await fileRes.json();
+      const fileUrl = fileInfo.url;
+
+      console.log(`Downloading file ${fileId} for ${tableId}...`);
+      const dataRes = await fetch(fileUrl);
+      if (!dataRes.ok) throw new Error(`File download failed (${dataRes.status})`);
+
+      const csvText = await dataRes.text();
+      console.log(`Fetched ${tableId}: ${csvText.length} bytes, ${csvText.split('\n').length} lines`);
+      return csvText;
+    }
+
+    if (job.status === 'error') {
+      throw new Error(`Export job failed: ${JSON.stringify(job.error || job.results)}`);
+    }
+
+    // Still processing, wait
+    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+  }
+
+  throw new Error(`Export job ${jobId} timed out after ${MAX_POLLS * POLL_INTERVAL / 1000}s`);
 }
 
 async function getCachedTable(key) {
@@ -178,21 +212,32 @@ app.get('/debug/api-test', async (req, res) => {
     results.listTables = { error: err.message };
   }
 
-  // 3. Test fetching cards table (first 5 rows)
+  // 3. Test fetching snapshots table (small, <=30 cols, sync preview works)
   try {
-    const url = `${KBC_URL}/v2/storage/tables/${encodeURIComponent(TABLES.cards)}/data-preview?limit=5&format=rfc`;
+    const url = `${KBC_URL}/v2/storage/tables/${encodeURIComponent(TABLES.snapshots)}/data-preview?limit=5&format=rfc`;
     const dataRes = await fetch(url, {
       headers: { 'X-StorageApi-Token': KBC_TOKEN },
     });
     const body = await dataRes.text();
-    results.cardsPreview = {
+    results.snapshotsPreview = {
       status: dataRes.status,
-      headers: Object.fromEntries(dataRes.headers.entries()),
       bodyLength: body.length,
       bodyPreview: body.slice(0, 500),
     };
   } catch (err) {
-    results.cardsPreview = { error: err.message };
+    results.snapshotsPreview = { error: err.message };
+  }
+
+  // 4. Test async export for cards (108 cols, requires async)
+  try {
+    const exportRes = await fetch(
+      `${KBC_URL}/v2/storage/tables/${encodeURIComponent(TABLES.cards)}/export-async`,
+      { method: 'POST', headers: { 'X-StorageApi-Token': KBC_TOKEN } }
+    );
+    const body = await exportRes.text();
+    results.cardsAsyncExport = { status: exportRes.status, bodyPreview: body.slice(0, 500) };
+  } catch (err) {
+    results.cardsAsyncExport = { error: err.message };
   }
 
   res.json({
