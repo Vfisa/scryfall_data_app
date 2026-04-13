@@ -1,6 +1,7 @@
 import express from 'express';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
+import { createHash } from 'crypto';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -96,6 +97,59 @@ app.post('/api/refresh', async (req, res) => {
   } catch (err) {
     res.status(502).json({ error: 'Failed to refresh', detail: err.message });
   }
+});
+
+// --- Debug page ---
+
+const SENSITIVE_PATTERNS = /token|password|secret|key|credential|auth/i;
+
+function maskValue(key, value) {
+  if (SENSITIVE_PATTERNS.test(key) && value) {
+    const hash = createHash('sha256').update(value).digest('hex').slice(0, 16);
+    const preview = value.length > 4 ? value.slice(0, 2) + '...' + value.slice(-2) : '****';
+    return `${preview} [sha256:${hash}]`;
+  }
+  return value;
+}
+
+app.get('/debug', (req, res) => {
+  const envVars = Object.entries(process.env)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => ({ key, value: maskValue(key, value) }));
+
+  const html = `<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug - Environment Variables</title>
+  <style>
+    body { font-family: 'SF Mono', 'Consolas', monospace; background: #1a1a2e; color: #e0e0e0; padding: 24px; margin: 0; }
+    h1 { font-size: 18px; color: #c9a227; margin-bottom: 4px; }
+    .subtitle { font-size: 12px; color: #6a6a8a; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 8px 12px; background: #16213e; color: #a0a0a0; border-bottom: 2px solid #2a2a4a; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+    td { padding: 6px 12px; border-bottom: 1px solid #2a2a4a; vertical-align: top; }
+    td:first-child { color: #60a5fa; white-space: nowrap; font-weight: 600; width: 1%; }
+    td:last-child { word-break: break-all; color: #a0a0a0; }
+    tr:hover td { background: #16213e; }
+    .hashed { color: #c084fc; }
+    .count { color: #6a6a8a; font-size: 13px; }
+    a { color: #60a5fa; }
+  </style>
+</head><body>
+  <h1>Environment Variables</h1>
+  <div class="subtitle">${envVars.length} variables &middot; sensitive values are SHA-256 hashed &middot; <a href="/">Back to app</a></div>
+  <table>
+    <thead><tr><th>Variable</th><th>Value</th></tr></thead>
+    <tbody>
+      ${envVars.map(({ key, value }) => {
+        const isSensitive = SENSITIVE_PATTERNS.test(key) && value.includes('[sha256:');
+        return `<tr><td>${key}</td><td${isSensitive ? ' class="hashed"' : ''}>${value || '<em style="color:#6a6a8a">(empty)</em>'}</td></tr>`;
+      }).join('\n      ')}
+    </tbody>
+  </table>
+</body></html>`;
+
+  res.send(html);
 });
 
 // --- Static files ---
