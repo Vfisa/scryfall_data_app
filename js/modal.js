@@ -55,20 +55,20 @@ const ModalModule = (() => {
       flavorEl.style.display = 'none';
     }
 
-    // Stats chips
+    // Stats grid
     const statsEl = document.getElementById('modal-stats');
     statsEl.innerHTML = '';
-    addStat(statsEl, 'Rarity', card.rarity, `rarity-badge rarity-${card.rarity}`);
+    addStat(statsEl, 'Rarity', card.rarity);
     if (card.cmc) addStat(statsEl, 'CMC', card.cmc);
     if (card.power || card.toughness) addStat(statsEl, 'P/T', `${card.power}/${card.toughness}`);
     if (card.loyalty) addStat(statsEl, 'Loyalty', card.loyalty);
-    if (card.color_identity.length) addStat(statsEl, 'Colors', card.color_identity.join(', '));
-    if (card.keywords) addStat(statsEl, 'Keywords', card.keywords);
-    if (card.layout) addStat(statsEl, 'Layout', card.layout);
+    if (card.color_identity.length) addStat(statsEl, 'Colors', card.color_identity.join(' '));
+    if (card.keywords) addStat(statsEl, 'Keywords', cleanArrayString(card.keywords));
     if (card.full_art) addStat(statsEl, 'Full Art', 'Yes');
-    addStat(statsEl, 'Finishes', card.finishes || (card.foil ? 'Foil' : 'Nonfoil'));
+    if (card.border_color) addStat(statsEl, 'Border', card.border_color);
+    addStat(statsEl, 'Finishes', formatFinishes(card));
 
-    // Links
+    // Links (under image)
     const linksEl = document.getElementById('modal-links');
     linksEl.innerHTML = '';
 
@@ -78,7 +78,7 @@ const ModalModule = (() => {
       a.href = card.scryfall_uri;
       a.target = '_blank';
       a.rel = 'noopener';
-      a.innerHTML = '\u{1F50D} Scryfall';
+      a.textContent = 'Scryfall';
       linksEl.appendChild(a);
     }
 
@@ -88,7 +88,7 @@ const ModalModule = (() => {
       a.href = `https://www.tcgplayer.com/product/${card.tcgplayer_id}/`;
       a.target = '_blank';
       a.rel = 'noopener';
-      a.innerHTML = '\u{1F6D2} TCGplayer';
+      a.textContent = 'TCGplayer';
       linksEl.appendChild(a);
     }
 
@@ -102,6 +102,11 @@ const ModalModule = (() => {
     // Price chart
     ChartModule.render(priceHistory);
 
+    // Scroll modal to top
+    document.getElementById('card-modal').scrollTop = 0;
+    const infoCol = document.querySelector('.modal-info-col');
+    if (infoCol) infoCol.scrollTop = 0;
+
     backdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -112,15 +117,39 @@ const ModalModule = (() => {
     ChartModule.destroy();
   }
 
-  function addStat(container, label, value, badgeClass) {
+  function addStat(container, label, value) {
     const chip = document.createElement('div');
     chip.className = 'stat-chip';
-    if (badgeClass) {
-      chip.innerHTML = `<strong>${label}:</strong> <span class="${badgeClass}">${value}</span>`;
-    } else {
-      chip.innerHTML = `<strong>${label}:</strong> ${value}`;
-    }
+    const labelEl = document.createElement('span');
+    labelEl.className = 'stat-label';
+    labelEl.textContent = label;
+    const valueEl = document.createElement('span');
+    valueEl.className = 'stat-value';
+    valueEl.textContent = value;
+    chip.appendChild(labelEl);
+    chip.appendChild(valueEl);
     container.appendChild(chip);
+  }
+
+  function formatFinishes(card) {
+    const finishes = cleanArrayString(card.finishes);
+    if (finishes) return finishes;
+    const parts = [];
+    if (card.nonfoil) parts.push('Nonfoil');
+    if (card.foil) parts.push('Foil');
+    return parts.join(', ') || 'Nonfoil';
+  }
+
+  function cleanArrayString(val) {
+    if (!val) return '';
+    // Turn ["nonfoil", "foil"] into "Nonfoil, Foil"
+    try {
+      const arr = JSON.parse(val.replace(/'/g, '"'));
+      if (Array.isArray(arr)) {
+        return arr.map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(', ');
+      }
+    } catch {}
+    return val;
   }
 
   function renderPriceCard(container, label, price, type) {
@@ -130,7 +159,7 @@ const ModalModule = (() => {
     labelEl.className = 'label';
     labelEl.textContent = label;
     const valueEl = document.createElement('div');
-    valueEl.className = `value ${type}`;
+    valueEl.className = `value ${price ? type : 'no-data'}`;
     valueEl.textContent = price ? `$${parseFloat(price).toFixed(2)}` : '--';
     card.appendChild(labelEl);
     card.appendChild(valueEl);

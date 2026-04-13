@@ -81,6 +81,13 @@
           </label>
           Foil Only
         </div>
+        <div class="toggle-row">
+          <label class="toggle-switch">
+            <input type="checkbox" id="filter-borderless">
+            <span class="toggle-slider"></span>
+          </label>
+          Borderless
+        </div>
       </div>
 
       <div class="filter-section">
@@ -103,17 +110,22 @@
       <div class="modal-content">
         <div class="modal-image-col">
           <img id="modal-image" src="" alt="">
+          <div id="modal-links" class="modal-links"></div>
         </div>
         <div class="modal-info-col">
           <div id="modal-card-name" class="modal-card-name"></div>
           <div id="modal-set-info" class="modal-set-info"></div>
-          <div id="modal-type-line" class="modal-type-line"></div>
-          <div id="modal-mana-cost" class="modal-mana-cost"></div>
+          <div class="modal-type-mana-row">
+            <div id="modal-type-line" class="modal-type-line"></div>
+            <div id="modal-mana-cost" class="modal-mana-cost"></div>
+          </div>
           <div id="modal-oracle-text" class="modal-oracle-text"></div>
           <div id="modal-flavor-text" class="modal-flavor-text"></div>
           <div id="modal-stats" class="modal-stats"></div>
-          <div id="modal-links" class="modal-links"></div>
-          <div id="modal-prices" class="modal-prices"></div>
+          <div class="modal-prices-section">
+            <h4>Current Prices</h4>
+            <div id="modal-prices" class="modal-prices"></div>
+          </div>
           <div class="modal-chart-section">
             <h4>Price History</h4>
             <div id="price-chart-container"></div>
