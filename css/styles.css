@@ -185,6 +185,21 @@ a:hover { text-decoration: underline; color: #93c5fd; }
   transform: translateX(16px); background: #fff;
 }
 
+/* Card variant toggles (sidebar) */
+.variant-toggles {
+  display: flex; flex-wrap: wrap; gap: 5px;
+}
+.variant-toggle {
+  padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600;
+  cursor: pointer; color: var(--text-muted); border: 1px solid var(--border);
+  background: transparent; transition: all 0.15s;
+}
+.variant-toggle.active {
+  background: var(--bg-input); color: var(--text-primary); border-color: var(--accent-gold);
+}
+.variant-toggle:not(.active) { opacity: 0.5; text-decoration: line-through; }
+.variant-toggle:hover { border-color: var(--border-light); }
+
 /* Reset button */
 #reset-filters {
   background: transparent; border: 1px solid var(--border);

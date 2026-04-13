@@ -87,22 +87,16 @@ const AnalyticsModule = (() => {
       if (opts.set && c.set_name !== opts.set) return false;
       if (opts.rarity && c.rarity !== opts.rarity) return false;
 
-      // Include toggles
+      // Exclusion toggles: if a category is OFF, exclude ALL cards of that type
       const inc = opts.includes;
-      const isJapanese = c.lang === 'ja';
-      const isBorderless = c.border_color === 'borderless';
-      const isFullArt = c.full_art;
-      const isFoilOnly = c.foil && !c.nonfoil;
-      const isRegular = !isJapanese && !isBorderless && !isFullArt && !isFoilOnly;
-
-      // Card must match at least one active include category
-      let included = false;
-      if (inc.regular && isRegular) included = true;
-      if (inc.fullArt && isFullArt) included = true;
-      if (inc.borderless && isBorderless) included = true;
-      if (inc.foil && isFoilOnly) included = true;
-      if (inc.japanese && isJapanese) included = true;
-      if (!included) return false;
+      if (!inc.japanese && c.lang === 'ja') return false;
+      if (!inc.borderless && c.border_color === 'borderless') return false;
+      if (!inc.fullArt && c.full_art) return false;
+      if (!inc.foil && c.foil && !c.nonfoil) return false;
+      if (!inc.regular) {
+        const isSpecial = c.lang === 'ja' || c.border_color === 'borderless' || c.full_art || (c.foil && !c.nonfoil);
+        if (!isSpecial) return false;
+      }
 
       return true;
     });
