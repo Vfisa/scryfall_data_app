@@ -17,6 +17,10 @@
   <!-- Header -->
   <header id="app-header">
     <h1>MTG Card Browser</h1>
+    <nav class="header-tabs">
+      <button class="tab-btn active" data-tab="browse">Browse</button>
+      <button class="tab-btn" data-tab="analytics">Analytics</button>
+    </nav>
     <span id="card-count">Loading...</span>
     <div class="header-controls">
       <input type="text" id="search-input" placeholder="Search by name...">
@@ -31,76 +35,185 @@
     </div>
   </header>
 
-  <!-- Main layout -->
-  <div id="app-body">
-
-    <!-- Sidebar filters -->
-    <aside id="filters-sidebar">
-
-      <div class="filter-section">
-        <h3>Set</h3>
-        <div id="filter-sets" class="filter-checkboxes"></div>
-      </div>
-
-      <div class="filter-section">
-        <h3>Rarity</h3>
-        <div id="filter-rarities" class="filter-checkboxes"></div>
-      </div>
-
-      <div class="filter-section">
-        <h3>Color Identity</h3>
-        <div id="filter-colors" class="color-toggles"></div>
-      </div>
-
-      <div class="filter-section">
-        <h3>Artist</h3>
-        <input type="text" id="filter-artist" class="filter-text-input"
-               list="artist-list" placeholder="Search artist...">
-        <datalist id="artist-list"></datalist>
-      </div>
-
-      <div class="filter-section">
-        <h3>Type</h3>
-        <input type="text" id="filter-type" class="filter-text-input"
-               list="type-list" placeholder="Search type...">
-        <datalist id="type-list"></datalist>
-      </div>
-
-      <div class="filter-section">
-        <div class="toggle-row">
-          <label class="toggle-switch">
-            <input type="checkbox" id="filter-full-art">
-            <span class="toggle-slider"></span>
-          </label>
-          Full Art Only
+  <!-- ========== BROWSE TAB ========== -->
+  <div id="tab-browse" class="tab-page active">
+    <div id="app-body">
+      <aside id="filters-sidebar">
+        <div class="filter-section">
+          <h3>Set</h3>
+          <div id="filter-sets" class="filter-checkboxes"></div>
         </div>
-        <div class="toggle-row">
-          <label class="toggle-switch">
-            <input type="checkbox" id="filter-foil">
-            <span class="toggle-slider"></span>
-          </label>
-          Foil Only
+        <div class="filter-section">
+          <h3>Rarity</h3>
+          <div id="filter-rarities" class="filter-checkboxes"></div>
         </div>
-        <div class="toggle-row">
-          <label class="toggle-switch">
-            <input type="checkbox" id="filter-borderless">
-            <span class="toggle-slider"></span>
-          </label>
-          Borderless
+        <div class="filter-section">
+          <h3>Color Identity</h3>
+          <div id="filter-colors" class="color-toggles"></div>
+        </div>
+        <div class="filter-section">
+          <h3>Artist</h3>
+          <input type="text" id="filter-artist" class="filter-text-input"
+                 list="artist-list" placeholder="Search artist...">
+          <datalist id="artist-list"></datalist>
+        </div>
+        <div class="filter-section">
+          <h3>Type</h3>
+          <input type="text" id="filter-type" class="filter-text-input"
+                 list="type-list" placeholder="Search type...">
+          <datalist id="type-list"></datalist>
+        </div>
+        <div class="filter-section">
+          <div class="toggle-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="filter-full-art">
+              <span class="toggle-slider"></span>
+            </label>
+            Full Art Only
+          </div>
+          <div class="toggle-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="filter-foil">
+              <span class="toggle-slider"></span>
+            </label>
+            Foil Only
+          </div>
+          <div class="toggle-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="filter-borderless">
+              <span class="toggle-slider"></span>
+            </label>
+            Borderless
+          </div>
+        </div>
+        <div class="filter-section">
+          <button id="reset-filters">Reset All Filters</button>
+        </div>
+      </aside>
+      <main id="card-grid-container">
+        <div id="card-grid"></div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ========== ANALYTICS TAB ========== -->
+  <div id="tab-analytics" class="tab-page">
+    <div class="analytics-page">
+
+      <!-- Analytics filters bar -->
+      <div class="analytics-filters">
+        <div class="af-group">
+          <label class="af-label">Price Type</label>
+          <div class="af-radios" id="af-price-type">
+            <label class="af-radio active"><input type="radio" name="af-price" value="usd" checked> USD</label>
+            <label class="af-radio"><input type="radio" name="af-price" value="foil"> Foil</label>
+            <label class="af-radio"><input type="radio" name="af-price" value="etched"> Etched</label>
+          </div>
+        </div>
+        <div class="af-group">
+          <label class="af-label">Min Price</label>
+          <input type="number" id="af-min-price" class="af-input" value="0.25" min="0" step="0.25">
+        </div>
+        <div class="af-group">
+          <label class="af-label">Set</label>
+          <select id="af-set" class="af-select">
+            <option value="">All Sets</option>
+          </select>
+        </div>
+        <div class="af-group">
+          <label class="af-label">Rarity</label>
+          <select id="af-rarity" class="af-select">
+            <option value="">All Rarities</option>
+            <option value="common">Common</option>
+            <option value="uncommon">Uncommon</option>
+            <option value="rare">Rare</option>
+            <option value="mythic">Mythic</option>
+          </select>
         </div>
       </div>
 
-      <div class="filter-section">
-        <button id="reset-filters">Reset All Filters</button>
-      </div>
+      <!-- Section 1: Market Overview -->
+      <section class="analytics-section">
+        <h2 class="section-title">Market Overview</h2>
+        <div id="market-overview" class="overview-grid"></div>
+      </section>
 
-    </aside>
+      <!-- Section 2: Top Movers -->
+      <section class="analytics-section">
+        <h2 class="section-title">Top Movers</h2>
+        <div class="movers-grid">
+          <div class="movers-col">
+            <h3 class="movers-heading gainers">Top 10 Gainers</h3>
+            <div id="top-gainers" class="movers-table-wrap"></div>
+          </div>
+          <div class="movers-col">
+            <h3 class="movers-heading losers">Top 10 Losers</h3>
+            <div id="top-losers" class="movers-table-wrap"></div>
+          </div>
+        </div>
+      </section>
 
-    <!-- Card grid -->
-    <main id="card-grid-container">
-      <div id="card-grid"></div>
-    </main>
+      <!-- Section 3: Price Distribution -->
+      <section class="analytics-section">
+        <h2 class="section-title">Price Distribution</h2>
+        <div class="chart-container-wide">
+          <canvas id="chart-distribution"></canvas>
+        </div>
+      </section>
 
+      <!-- Section 4: Price Trends Over Time -->
+      <section class="analytics-section">
+        <h2 class="section-title">Price Trends Over Time</h2>
+        <div class="charts-row">
+          <div class="chart-half">
+            <h4 class="chart-subtitle">Average Price by Rarity</h4>
+            <div class="chart-container">
+              <canvas id="chart-trend-rarity"></canvas>
+            </div>
+          </div>
+          <div class="chart-half">
+            <h4 class="chart-subtitle">Average Price by Set</h4>
+            <div class="chart-container">
+              <canvas id="chart-trend-set"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Rarity Breakdown -->
+      <section class="analytics-section">
+        <h2 class="section-title">Rarity Breakdown</h2>
+        <div class="charts-row">
+          <div class="chart-half">
+            <h4 class="chart-subtitle">Share of Total Market Value</h4>
+            <div class="chart-container chart-container-sq">
+              <canvas id="chart-rarity-donut"></canvas>
+            </div>
+          </div>
+          <div class="chart-half">
+            <h4 class="chart-subtitle">Average Price by Rarity</h4>
+            <div class="chart-container">
+              <canvas id="chart-rarity-bar"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 6: Most Valuable Cards -->
+      <section class="analytics-section">
+        <h2 class="section-title">Most Valuable Cards</h2>
+        <div id="valuable-table-wrap" class="valuable-table-wrap"></div>
+      </section>
+
+      <!-- Section 7: Artist Portfolio -->
+      <section class="analytics-section">
+        <h2 class="section-title">Top Artists by Portfolio Value</h2>
+        <div class="chart-container-wide">
+          <canvas id="chart-artists"></canvas>
+        </div>
+      </section>
+
+    </div>
   </div>
 
   <!-- Card detail modal -->
@@ -145,6 +258,7 @@
   <script src="js/grid.js"></script>
   <script src="js/chart.js"></script>
   <script src="js/modal.js"></script>
+  <script src="js/analytics.js"></script>
   <script src="js/app.js"></script>
 
 </body>

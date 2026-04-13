@@ -1,16 +1,18 @@
 const App = (() => {
   let allCards = [];
   let totalCount = 0;
+  let analyticsRendered = false;
 
   async function init() {
     try {
-      const { cards, filterOptions } = await DataModule.load();
+      const { cards, priceHistoryMap, filterOptions } = await DataModule.load();
       allCards = cards;
       totalCount = cards.length;
 
       FiltersModule.init(filterOptions, onFilterChange);
       GridModule.init(onCardClick);
       ModalModule.init();
+      AnalyticsModule.init(cards, priceHistoryMap, filterOptions);
 
       // Sort control
       document.getElementById('sort-select').addEventListener('change', e => {
@@ -24,6 +26,9 @@ const App = (() => {
         App._searchTimer = setTimeout(refresh, 200);
       });
 
+      // Tab switching
+      initTabs();
+
       refresh();
       hideLoading();
     } catch (err) {
@@ -31,6 +36,37 @@ const App = (() => {
       document.getElementById('loading-overlay').innerHTML =
         `<p style="color: #d4451a;">Failed to load card data. Please verify the app is running inside Keboola Data Apps with a valid storage token.</p>`;
     }
+  }
+
+  function initTabs() {
+    const btns = document.querySelectorAll('.tab-btn');
+    const browseControls = document.querySelector('.header-controls');
+
+    btns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+
+        // Update buttons
+        btns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Update pages
+        document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+        document.getElementById(`tab-${tab}`).classList.add('active');
+
+        // Show/hide browse-specific controls
+        const isBrowse = tab === 'browse';
+        browseControls.style.display = isBrowse ? 'flex' : 'none';
+        document.getElementById('card-count').style.display = isBrowse ? 'inline' : 'none';
+
+        // Render analytics on first visit (deferred for performance)
+        if (tab === 'analytics' && !analyticsRendered) {
+          analyticsRendered = true;
+          // Small delay to let the tab show before heavy rendering
+          requestAnimationFrame(() => AnalyticsModule.render());
+        }
+      });
+    });
   }
 
   function refresh() {
