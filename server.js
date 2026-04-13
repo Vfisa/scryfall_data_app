@@ -152,6 +152,57 @@ app.get('/debug', (req, res) => {
   res.send(html);
 });
 
+// Debug: test Keboola API connectivity
+app.get('/debug/api-test', async (req, res) => {
+  const results = {};
+
+  // 1. Test token verification
+  try {
+    const verifyRes = await fetch(`${KBC_URL}/v2/storage/tokens/verify`, {
+      headers: { 'X-StorageApi-Token': KBC_TOKEN },
+    });
+    const body = await verifyRes.text();
+    results.tokenVerify = { status: verifyRes.status, body: verifyRes.ok ? JSON.parse(body) : body };
+  } catch (err) {
+    results.tokenVerify = { error: err.message };
+  }
+
+  // 2. Test list tables in bucket
+  try {
+    const tablesRes = await fetch(`${KBC_URL}/v2/storage/buckets/out.c-scryfall/tables`, {
+      headers: { 'X-StorageApi-Token': KBC_TOKEN },
+    });
+    const body = await tablesRes.text();
+    results.listTables = { status: tablesRes.status, body: tablesRes.ok ? JSON.parse(body).map(t => t.id) : body };
+  } catch (err) {
+    results.listTables = { error: err.message };
+  }
+
+  // 3. Test fetching cards table (first 5 rows)
+  try {
+    const url = `${KBC_URL}/v2/storage/tables/${encodeURIComponent(TABLES.cards)}/data-preview?limit=5&format=rfc`;
+    const dataRes = await fetch(url, {
+      headers: { 'X-StorageApi-Token': KBC_TOKEN },
+    });
+    const body = await dataRes.text();
+    results.cardsPreview = {
+      status: dataRes.status,
+      headers: Object.fromEntries(dataRes.headers.entries()),
+      bodyLength: body.length,
+      bodyPreview: body.slice(0, 500),
+    };
+  } catch (err) {
+    results.cardsPreview = { error: err.message };
+  }
+
+  res.json({
+    kbc_url: KBC_URL,
+    kbc_token_set: !!KBC_TOKEN,
+    tables: TABLES,
+    results,
+  });
+});
+
 // --- Static files ---
 
 // Handle POST to / (Keboola platform sends POST on startup)
