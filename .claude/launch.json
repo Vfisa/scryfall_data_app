@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "mtg-browser",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["server.js"],
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "source env.local && export KBC_TOKEN KBC_URL SANDBOX_ID && node server.js"],
       "port": 3000
     }
   ]

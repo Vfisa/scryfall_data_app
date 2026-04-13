@@ -30,7 +30,18 @@ app.use(express.json());
 async function fetchTableCSV(tableId) {
   const headers = { 'X-StorageApi-Token': KBC_TOKEN };
 
-  // Step 1: Start async export
+  // Step 1: Get table metadata (for column headers — sliced exports omit them)
+  console.log(`Fetching table metadata for ${tableId}...`);
+  const tableInfoRes = await fetch(
+    `${KBC_URL}/v2/storage/tables/${encodeURIComponent(tableId)}`,
+    { headers }
+  );
+  if (!tableInfoRes.ok) throw new Error(`Table info failed (${tableInfoRes.status})`);
+  const tableInfo = await tableInfoRes.json();
+  const columns = tableInfo.columns || [];
+  console.log(`Table ${tableId} has ${columns.length} columns`);
+
+  // Step 2: Start async export
   console.log(`Starting async export for ${tableId}...`);
   const exportRes = await fetch(
     `${KBC_URL}/v2/storage/tables/${encodeURIComponent(tableId)}/export-async`,
@@ -47,7 +58,7 @@ async function fetchTableCSV(tableId) {
   const jobId = exportJob.id;
   console.log(`Export job ${jobId} created for ${tableId}`);
 
-  // Step 2: Poll job until finished
+  // Step 3: Poll job until finished
   const MAX_POLLS = 60;
   const POLL_INTERVAL = 2000;
   for (let i = 0; i < MAX_POLLS; i++) {
@@ -59,16 +70,48 @@ async function fetchTableCSV(tableId) {
       const fileId = job.results?.file?.id;
       if (!fileId) throw new Error(`Job succeeded but no file ID in results: ${JSON.stringify(job.results)}`);
 
-      // Step 3: Get file info and download
+      // Step 4: Get file info
       const fileRes = await fetch(`${KBC_URL}/v2/storage/files/${fileId}`, { headers });
       const fileInfo = await fileRes.json();
-      const fileUrl = fileInfo.url;
 
-      console.log(`Downloading file ${fileId} for ${tableId}...`);
-      const dataRes = await fetch(fileUrl);
-      if (!dataRes.ok) throw new Error(`File download failed (${dataRes.status})`);
+      let csvBody;
 
-      const csvText = await dataRes.text();
+      if (fileInfo.isSliced) {
+        // Sliced file: download manifest, then download each slice
+        console.log(`File ${fileId} is sliced, downloading manifest...`);
+        const manifestRes = await fetch(fileInfo.url);
+        if (!manifestRes.ok) throw new Error(`Manifest download failed (${manifestRes.status})`);
+        const manifest = await manifestRes.json();
+
+        // Extract SAS token from manifest URL
+        const sasToken = fileInfo.url.substring(fileInfo.url.indexOf('?'));
+        const slices = [];
+
+        for (const entry of manifest.entries) {
+          // Convert azure:// URL to https:// URL with SAS token
+          const sliceUrl = entry.url
+            .replace('azure://', 'https://')
+            + sasToken;
+
+          console.log(`Downloading slice: ${entry.url.split('/').pop()}...`);
+          const sliceRes = await fetch(sliceUrl);
+          if (!sliceRes.ok) throw new Error(`Slice download failed (${sliceRes.status}): ${entry.url}`);
+          slices.push(await sliceRes.text());
+        }
+
+        csvBody = slices.join('');
+      } else {
+        // Non-sliced: direct download
+        console.log(`Downloading file ${fileId}...`);
+        const dataRes = await fetch(fileInfo.url);
+        if (!dataRes.ok) throw new Error(`File download failed (${dataRes.status})`);
+        csvBody = await dataRes.text();
+      }
+
+      // Prepend header row (sliced exports don't include headers)
+      const headerRow = '"' + columns.join('","') + '"';
+      const csvText = headerRow + '\n' + csvBody;
+
       console.log(`Fetched ${tableId}: ${csvText.length} bytes, ${csvText.split('\n').length} lines`);
       return csvText;
     }
