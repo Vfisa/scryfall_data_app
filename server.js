@@ -14,12 +14,14 @@ const KBC_URL = (process.env.KBC_URL || 'https://connection.eu-central-1.keboola
 const TABLES = {
   cards: 'out.c-scryfall.cards',
   snapshots: 'out.c-scryfall.cards_price_snapshot',
+  tcgplayer: 'out.c-scryfall.TCGPlayer_sealed_guide',
 };
 
 // In-memory cache
 const cache = {
   cards: { data: null, fetchedAt: 0 },
   snapshots: { data: null, fetchedAt: 0 },
+  tcgplayer: { data: null, fetchedAt: 0 },
 };
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -164,12 +166,24 @@ app.get('/api/tables/snapshots', async (req, res) => {
   }
 });
 
+app.get('/api/tables/tcgplayer', async (req, res) => {
+  try {
+    const csv = await getCachedTable('tcgplayer');
+    res.set('Content-Type', 'text/csv');
+    res.send(csv);
+  } catch (err) {
+    console.error('Error fetching tcgplayer:', err.message);
+    res.status(502).json({ error: 'Failed to fetch tcgplayer from Keboola Storage', detail: err.message });
+  }
+});
+
 // Force cache refresh
 app.post('/api/refresh', async (req, res) => {
   try {
     cache.cards.fetchedAt = 0;
     cache.snapshots.fetchedAt = 0;
-    await Promise.all([getCachedTable('cards'), getCachedTable('snapshots')]);
+    cache.tcgplayer.fetchedAt = 0;
+    await Promise.all([getCachedTable('cards'), getCachedTable('snapshots'), getCachedTable('tcgplayer')]);
     res.json({ status: 'ok', message: 'Cache refreshed' });
   } catch (err) {
     res.status(502).json({ error: 'Failed to refresh', detail: err.message });
@@ -305,7 +319,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`KBC_TOKEN: ${KBC_TOKEN ? '***set***' : 'NOT SET'}`);
 
   // Pre-warm cache on startup
-  Promise.all([getCachedTable('cards'), getCachedTable('snapshots')])
+  Promise.all([getCachedTable('cards'), getCachedTable('snapshots'), getCachedTable('tcgplayer')])
     .then(() => console.log('Cache pre-warmed successfully'))
     .catch(err => console.warn('Cache pre-warm failed (will retry on first request):', err.message));
 });

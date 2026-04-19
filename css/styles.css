@@ -426,6 +426,39 @@ a:hover { text-decoration: underline; color: #93c5fd; }
   font-weight: 700; color: var(--text-primary); font-size: 13px;
 }
 
+/* TCGPlayer sealed guide */
+.modal-tcgplayer-section:empty {
+  display: none;
+}
+.modal-tcgplayer-section {
+  margin-bottom: 20px;
+}
+.modal-tcgplayer-heading {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--text-muted); margin-bottom: 10px; font-weight: 700;
+}
+.modal-tcgplayer-grade {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--bg-primary); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 12px; margin-bottom: 8px;
+}
+.modal-tcgplayer-grade-label {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+.modal-tcgplayer-grade-value {
+  font-size: 13px; font-weight: 700; color: var(--accent-gold);
+}
+.modal-tcgplayer-commentary {
+  font-size: 13px; line-height: 1.5;
+  color: var(--text-secondary);
+  padding: 10px 14px;
+  background: linear-gradient(90deg, var(--glow-gold), transparent);
+  border-left: 3px solid var(--accent-gold);
+  border-radius: 0 6px 6px 0;
+  white-space: pre-wrap;
+}
+
 /* Price cards */
 .modal-prices-section h4 {
   font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;

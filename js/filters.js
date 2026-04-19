@@ -5,6 +5,7 @@ const FiltersModule = (() => {
     colors: [],
     artist: '',
     typeLine: '',
+    tcgplayerGrades: [],
     // Variant exclusion: true = include, false = exclude
     variants: { regular: true, fullArt: true, borderless: true, foilOnly: true, japanese: true },
   };
@@ -18,6 +19,7 @@ const FiltersModule = (() => {
     renderRarityFilters(filterOptions.rarities);
     renderColorToggles();
     renderTextFilters(filterOptions);
+    renderTcgplayerGradeFilters(filterOptions.tcgplayerGrades || []);
     renderVariantToggles();
     renderResetButton();
   }
@@ -88,6 +90,21 @@ const FiltersModule = (() => {
     typeInput.addEventListener('input', () => { state.typeLine = typeInput.value.trim(); debouncedChange(); });
   }
 
+  function renderTcgplayerGradeFilters(grades) {
+    const container = document.getElementById('filter-tcgplayer-grade');
+    if (!container) return;
+    container.innerHTML = '';
+    grades.forEach(g => {
+      const label = document.createElement('label');
+      const cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.value = g;
+      cb.addEventListener('change', () => { state.tcgplayerGrades = getCheckedValues(container); emitChange(); });
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(g));
+      container.appendChild(label);
+    });
+  }
+
   function renderVariantToggles() {
     const container = document.getElementById('filter-variants');
     container.querySelectorAll('.variant-toggle').forEach(btn => {
@@ -106,10 +123,11 @@ const FiltersModule = (() => {
     document.getElementById('reset-filters').addEventListener('click', () => {
       state = {
         sets: [], rarities: [], colors: [], artist: '', typeLine: '',
+        tcgplayerGrades: [],
         variants: { regular: true, fullArt: true, borderless: true, foilOnly: true, japanese: true },
       };
 
-      document.querySelectorAll('#filter-sets input, #filter-rarities input').forEach(cb => cb.checked = false);
+      document.querySelectorAll('#filter-sets input, #filter-rarities input, #filter-tcgplayer-grade input').forEach(cb => cb.checked = false);
       document.querySelectorAll('.color-toggle').forEach(el => el.classList.remove('active'));
       document.getElementById('filter-artist').value = '';
       document.getElementById('filter-type').value = '';
@@ -159,6 +177,7 @@ const FiltersModule = (() => {
 
       if (state.artist && !card.artist.toLowerCase().includes(state.artist.toLowerCase())) return false;
       if (state.typeLine && !card.type_line.toLowerCase().includes(state.typeLine.toLowerCase())) return false;
+      if (state.tcgplayerGrades.length && !state.tcgplayerGrades.includes(card.tcgplayer_grade)) return false;
       if (search && !card.name.toLowerCase().includes(search)) return false;
 
       // Variant exclusion filters: if OFF, exclude cards of that type

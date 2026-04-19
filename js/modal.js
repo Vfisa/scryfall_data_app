@@ -68,6 +68,37 @@ const ModalModule = (() => {
     if (card.border_color) addStat(statsEl, 'Border', card.border_color);
     addStat(statsEl, 'Finishes', formatFinishes(card));
 
+    // TCGPlayer grade + commentary
+    const tcgEl = document.getElementById('modal-tcgplayer-section');
+    tcgEl.innerHTML = '';
+    if (card.tcgplayer_grade || card.tcgplayer_commentary) {
+      const heading = document.createElement('h4');
+      heading.className = 'modal-tcgplayer-heading';
+      heading.textContent = 'TCGPlayer sealed guide';
+      tcgEl.appendChild(heading);
+
+      if (card.tcgplayer_grade) {
+        const gradeEl = document.createElement('div');
+        gradeEl.className = 'modal-tcgplayer-grade';
+        const gradeLabel = document.createElement('span');
+        gradeLabel.className = 'modal-tcgplayer-grade-label';
+        gradeLabel.textContent = 'Grade:';
+        const gradeValue = document.createElement('span');
+        gradeValue.className = 'modal-tcgplayer-grade-value';
+        gradeValue.textContent = card.tcgplayer_grade;
+        gradeEl.appendChild(gradeLabel);
+        gradeEl.appendChild(gradeValue);
+        tcgEl.appendChild(gradeEl);
+      }
+
+      if (card.tcgplayer_commentary) {
+        const commentEl = document.createElement('div');
+        commentEl.className = 'modal-tcgplayer-commentary';
+        commentEl.textContent = card.tcgplayer_commentary;
+        tcgEl.appendChild(commentEl);
+      }
+    }
+
     // Links (under image)
     const linksEl = document.getElementById('modal-links');
     linksEl.innerHTML = '';

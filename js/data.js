@@ -55,7 +55,34 @@ const DataModule = (() => {
       border_color: row.border_color || '',
       lang: row.lang || 'en',
       frame_effects: row.frame_effects || '',
+      tcgplayer_grade: '',
+      tcgplayer_commentary: '',
     };
+  }
+
+  function buildTcgplayerMap(rows) {
+    const map = new Map();
+    rows.forEach(row => {
+      const set = (row.Set || '').toLowerCase();
+      const num = row.Collector_Number || '';
+      if (!set || !num) return;
+      map.set(`${set}|${num}`, {
+        grade: row.Usability_Tier || '',
+        commentary: row.Contextual_Commentary_from_Article || '',
+      });
+    });
+    return map;
+  }
+
+  function applyTcgplayerData(cards, tcgMap) {
+    cards.forEach(card => {
+      const key = `${(card.set || '').toLowerCase()}|${card.collector_number}`;
+      const match = tcgMap.get(key);
+      if (match) {
+        card.tcgplayer_grade = match.grade;
+        card.tcgplayer_commentary = match.commentary;
+      }
+    });
   }
 
   function buildFilterOptions(cards) {
@@ -63,12 +90,14 @@ const DataModule = (() => {
     const rarities = new Set();
     const artists = new Set();
     const typeLines = new Set();
+    const tcgplayerGrades = new Set();
 
     cards.forEach(c => {
       if (c.set_name) sets.add(c.set_name);
       if (c.rarity) rarities.add(c.rarity);
       if (c.artist) artists.add(c.artist);
       if (c.type_line) typeLines.add(c.type_line);
+      if (c.tcgplayer_grade) tcgplayerGrades.add(c.tcgplayer_grade);
     });
 
     const rarityOrder = ['common', 'uncommon', 'rare', 'mythic'];
@@ -77,6 +106,7 @@ const DataModule = (() => {
       rarities: rarityOrder.filter(r => rarities.has(r)),
       artists: [...artists].sort(),
       typeLines: [...typeLines].sort(),
+      tcgplayerGrades: [...tcgplayerGrades].sort(),
     };
   }
 
@@ -109,13 +139,19 @@ const DataModule = (() => {
   }
 
   async function load() {
-    const [cardsRaw, snapshotsRaw] = await Promise.all([
+    const [cardsRaw, snapshotsRaw, tcgplayerRaw] = await Promise.all([
       loadCSV('/api/tables/cards'),
       loadCSV('/api/tables/snapshots'),
+      loadCSV('/api/tables/tcgplayer').catch(err => {
+        console.warn('Failed to load tcgplayer data:', err);
+        return [];
+      }),
     ]);
 
     cards = cardsRaw.map(parseCard);
     priceHistoryMap = buildPriceHistory(snapshotsRaw);
+    const tcgMap = buildTcgplayerMap(tcgplayerRaw);
+    applyTcgplayerData(cards, tcgMap);
     filterOptions = buildFilterOptions(cards);
 
     return { cards, priceHistoryMap, filterOptions };
