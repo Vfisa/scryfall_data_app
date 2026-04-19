@@ -16,13 +16,18 @@
 
   <!-- Header -->
   <header id="app-header">
-    <h1>MTG Card Browser</h1>
-    <nav class="header-tabs">
-      <button class="tab-btn active" data-tab="browse">Browse</button>
-      <button class="tab-btn" data-tab="analytics">Analytics</button>
-    </nav>
-    <span id="card-count">Loading...</span>
-    <div class="header-controls">
+    <div class="header-row header-row-primary">
+      <button id="filter-drawer-toggle" class="filter-drawer-toggle" aria-label="Open filters">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="10" y1="18" x2="14" y2="18"/></svg>
+      </button>
+      <h1>MTG Card Browser</h1>
+      <span id="card-count">Loading...</span>
+      <nav class="header-tabs">
+        <button class="tab-btn active" data-tab="browse">Browse</button>
+        <button class="tab-btn" data-tab="analytics">Analytics</button>
+      </nav>
+    </div>
+    <div class="header-row header-row-controls header-controls">
       <input type="text" id="search-input" placeholder="Search by name...">
       <select id="sort-select">
         <option value="name-asc">Name A-Z</option>
@@ -35,10 +40,17 @@
     </div>
   </header>
 
+  <!-- Mobile filters drawer backdrop -->
+  <div id="filter-drawer-backdrop" class="filter-drawer-backdrop"></div>
+
   <!-- ========== BROWSE TAB ========== -->
   <div id="tab-browse" class="tab-page active">
     <div id="app-body">
       <aside id="filters-sidebar">
+        <div class="filters-sidebar-header">
+          <span>Filters</span>
+          <button id="filter-drawer-close" class="filter-drawer-close" aria-label="Close filters">&times;</button>
+        </div>
         <div class="filter-section">
           <h3>Set</h3>
           <div id="filter-sets" class="filter-checkboxes"></div>

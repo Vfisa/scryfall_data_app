@@ -29,6 +29,9 @@ const App = (() => {
       // Tab switching
       initTabs();
 
+      // Mobile filter drawer
+      initFilterDrawer();
+
       refresh();
       hideLoading();
     } catch (err) {
@@ -36,6 +39,40 @@ const App = (() => {
       document.getElementById('loading-overlay').innerHTML =
         `<p style="color: #d4451a;">Failed to load card data. Please verify the app is running inside Keboola Data Apps with a valid storage token.</p>`;
     }
+  }
+
+  function initFilterDrawer() {
+    const toggle = document.getElementById('filter-drawer-toggle');
+    const close = document.getElementById('filter-drawer-close');
+    const backdrop = document.getElementById('filter-drawer-backdrop');
+    const sidebar = document.getElementById('filters-sidebar');
+
+    if (!toggle || !close || !backdrop || !sidebar) return;
+
+    const open = () => {
+      sidebar.classList.add('open');
+      backdrop.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    };
+    const hide = () => {
+      sidebar.classList.remove('open');
+      backdrop.classList.remove('open');
+      document.body.style.overflow = '';
+    };
+
+    toggle.addEventListener('click', open);
+    close.addEventListener('click', hide);
+    backdrop.addEventListener('click', hide);
+
+    // Close drawer when switching to Analytics tab (filters are Browse-only)
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', hide);
+    });
+
+    // Close drawer with Escape key
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && sidebar.classList.contains('open')) hide();
+    });
   }
 
   function initTabs() {
@@ -54,10 +91,9 @@ const App = (() => {
         document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
         document.getElementById(`tab-${tab}`).classList.add('active');
 
-        // Show/hide browse-specific controls
+        // Show/hide browse-specific controls (via class, so media queries can override)
         const isBrowse = tab === 'browse';
-        browseControls.style.display = isBrowse ? 'flex' : 'none';
-        document.getElementById('card-count').style.display = isBrowse ? 'inline' : 'none';
+        document.body.classList.toggle('on-analytics-tab', !isBrowse);
 
         // Render analytics on first visit (deferred for performance)
         if (tab === 'analytics' && !analyticsRendered) {
