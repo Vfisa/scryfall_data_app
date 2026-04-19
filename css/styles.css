@@ -133,6 +133,68 @@ a:hover { text-decoration: underline; color: #93c5fd; }
 .filter-text-input:focus { border-color: var(--accent-gold); }
 .filter-text-input::placeholder { color: var(--text-muted); }
 
+/* Multiselect dropdown */
+.multiselect {
+  position: relative;
+}
+.multiselect-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%;
+  background: var(--bg-input); border: 1px solid var(--border);
+  color: var(--text-primary); padding: 7px 10px; border-radius: 6px;
+  font-size: 13px; cursor: pointer; text-align: left;
+  transition: border-color 0.2s;
+  font-family: inherit;
+}
+.multiselect-toggle:hover { border-color: var(--accent-gold); }
+.multiselect.open .multiselect-toggle { border-color: var(--accent-gold); }
+.multiselect-label {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  flex: 1;
+}
+.multiselect-arrow {
+  font-size: 10px; color: var(--text-muted); margin-left: 6px;
+  transition: transform 0.2s;
+}
+.multiselect.open .multiselect-arrow { transform: rotate(180deg); }
+.multiselect-menu {
+  display: none;
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--bg-secondary, var(--bg-input));
+  border: 1px solid var(--border); border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  z-index: 20;
+  padding: 6px;
+}
+.multiselect.open .multiselect-menu { display: block; }
+.multiselect-search {
+  width: 100%;
+  background: var(--bg-input); border: 1px solid var(--border);
+  color: var(--text-primary); padding: 6px 8px; border-radius: 4px;
+  font-size: 12px; outline: none; margin-bottom: 6px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+.multiselect-search:focus { border-color: var(--accent-gold); }
+.multiselect-search::placeholder { color: var(--text-muted); }
+.multiselect-options {
+  max-height: 220px; overflow-y: auto;
+  padding: 2px;
+}
+.multiselect-options label {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; color: var(--text-secondary);
+  cursor: pointer; padding: 5px 6px; border-radius: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+.multiselect-options label:hover {
+  color: var(--text-primary);
+  background: rgba(255,255,255,0.04);
+}
+.multiselect-options input[type="checkbox"] {
+  accent-color: var(--accent-gold); cursor: pointer;
+}
+
 /* Color identity toggles */
 .color-toggles {
   display: flex; gap: 6px; flex-wrap: wrap;

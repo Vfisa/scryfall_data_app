@@ -65,7 +65,16 @@
         </div>
         <div class="filter-section">
           <h3>TCGPlayer grade</h3>
-          <div id="filter-tcgplayer-grade" class="filter-checkboxes"></div>
+          <div class="multiselect" id="filter-tcgplayer-grade-dropdown">
+            <button type="button" class="multiselect-toggle" id="filter-tcgplayer-grade-toggle">
+              <span class="multiselect-label">All grades</span>
+              <span class="multiselect-arrow">▾</span>
+            </button>
+            <div class="multiselect-menu" id="filter-tcgplayer-grade-menu">
+              <input type="text" class="multiselect-search" id="filter-tcgplayer-grade-search" placeholder="Search grades...">
+              <div class="multiselect-options" id="filter-tcgplayer-grade"></div>
+            </div>
+          </div>
         </div>
         <div class="filter-section">
           <h3>Card Variant</h3>

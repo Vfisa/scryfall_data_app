@@ -92,17 +92,62 @@ const FiltersModule = (() => {
 
   function renderTcgplayerGradeFilters(grades) {
     const container = document.getElementById('filter-tcgplayer-grade');
-    if (!container) return;
+    const dropdown = document.getElementById('filter-tcgplayer-grade-dropdown');
+    const toggle = document.getElementById('filter-tcgplayer-grade-toggle');
+    const labelEl = toggle ? toggle.querySelector('.multiselect-label') : null;
+    const search = document.getElementById('filter-tcgplayer-grade-search');
+    if (!container || !dropdown || !toggle || !labelEl) return;
+
     container.innerHTML = '';
     grades.forEach(g => {
       const label = document.createElement('label');
       const cb = document.createElement('input');
       cb.type = 'checkbox'; cb.value = g;
-      cb.addEventListener('change', () => { state.tcgplayerGrades = getCheckedValues(container); emitChange(); });
+      cb.addEventListener('change', () => {
+        state.tcgplayerGrades = getCheckedValues(container);
+        updateTcgplayerGradeLabel();
+        emitChange();
+      });
       label.appendChild(cb);
       label.appendChild(document.createTextNode(g));
       container.appendChild(label);
     });
+
+    function updateTcgplayerGradeLabel() {
+      const count = state.tcgplayerGrades.length;
+      if (count === 0) labelEl.textContent = 'All grades';
+      else if (count === 1) labelEl.textContent = state.tcgplayerGrades[0];
+      else labelEl.textContent = `${count} grades selected`;
+    }
+
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+      if (dropdown.classList.contains('open') && search) {
+        search.focus();
+      }
+    });
+
+    if (search) {
+      search.addEventListener('click', (e) => e.stopPropagation());
+      search.addEventListener('input', () => {
+        const q = search.value.toLowerCase();
+        container.querySelectorAll('label').forEach(label => {
+          const text = label.textContent.toLowerCase();
+          label.style.display = text.includes(q) ? '' : 'none';
+        });
+      });
+    }
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
+
+    // Expose so reset button can update the label
+    renderTcgplayerGradeFilters._updateLabel = updateTcgplayerGradeLabel;
   }
 
   function renderVariantToggles() {
@@ -132,6 +177,12 @@ const FiltersModule = (() => {
       document.getElementById('filter-artist').value = '';
       document.getElementById('filter-type').value = '';
       document.getElementById('search-input').value = '';
+      const tcgSearch = document.getElementById('filter-tcgplayer-grade-search');
+      if (tcgSearch) {
+        tcgSearch.value = '';
+        document.querySelectorAll('#filter-tcgplayer-grade label').forEach(l => l.style.display = '');
+      }
+      if (renderTcgplayerGradeFilters._updateLabel) renderTcgplayerGradeFilters._updateLabel();
       // Reset variant toggles to all active
       document.querySelectorAll('.variant-toggle').forEach(btn => btn.classList.add('active'));
 
