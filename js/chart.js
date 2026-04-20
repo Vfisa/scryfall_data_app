@@ -1,85 +1,60 @@
 const ChartModule = (() => {
-  let chartInstance = null;
+  const instances = new Map(); // containerId → Chart instance
 
-  function render(priceHistory) {
-    const container = document.getElementById('price-chart-container');
+  // seriesDefs: [{ key, label, color }] — `key` selects the field on each point.
+  // currency: '$' | 'C$' — used for tooltip and Y-axis tick labels.
+  function renderSeries(containerId, priceHistory, seriesDefs, currency = '$') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
     container.innerHTML = '';
 
-    const hasAnyPrice = priceHistory.some(p => p.usd || p.usd_foil || p.usd_etched);
+    const hasAnyPrice = priceHistory.some(p => seriesDefs.some(def => p[def.key] !== null && p[def.key] !== '' && p[def.key] !== undefined));
 
     if (!hasAnyPrice || priceHistory.length === 0) {
       const msg = document.createElement('div');
       msg.className = 'no-price-data';
       msg.textContent = 'No price history available';
       container.appendChild(msg);
+      destroy(containerId);
       return;
     }
 
     const canvas = document.createElement('canvas');
-    canvas.id = 'price-chart';
     container.appendChild(canvas);
 
     const labels = priceHistory.map(p => p.date);
-
     const datasets = [];
 
-    const usdData = priceHistory.map(p => p.usd ? parseFloat(p.usd) : null);
-    if (usdData.some(v => v !== null)) {
-      datasets.push({
-        label: 'USD',
-        data: usdData,
-        borderColor: '#4ade80',
-        backgroundColor: 'rgba(74, 222, 128, 0.1)',
-        pointBackgroundColor: '#4ade80',
-        tension: 0.3,
-        pointRadius: 4,
-        spanGaps: true,
+    seriesDefs.forEach(def => {
+      const data = priceHistory.map(p => {
+        const v = p[def.key];
+        if (v === null || v === '' || v === undefined) return null;
+        const n = parseFloat(v);
+        return Number.isFinite(n) ? n : null;
       });
-    }
+      if (data.some(v => v !== null)) {
+        const hexAlpha = def.color + '1a'; // ~10% opacity
+        datasets.push({
+          label: def.label,
+          data,
+          borderColor: def.color,
+          backgroundColor: hexAlpha,
+          pointBackgroundColor: def.color,
+          tension: 0.3,
+          pointRadius: 4,
+          spanGaps: true,
+        });
+      }
+    });
 
-    const foilData = priceHistory.map(p => p.usd_foil ? parseFloat(p.usd_foil) : null);
-    if (foilData.some(v => v !== null)) {
-      datasets.push({
-        label: 'Foil',
-        data: foilData,
-        borderColor: '#c084fc',
-        backgroundColor: 'rgba(192, 132, 252, 0.1)',
-        pointBackgroundColor: '#c084fc',
-        tension: 0.3,
-        pointRadius: 4,
-        spanGaps: true,
-      });
-    }
-
-    const etchedData = priceHistory.map(p => p.usd_etched ? parseFloat(p.usd_etched) : null);
-    if (etchedData.some(v => v !== null)) {
-      datasets.push({
-        label: 'Etched',
-        data: etchedData,
-        borderColor: '#60a5fa',
-        backgroundColor: 'rgba(96, 165, 250, 0.1)',
-        pointBackgroundColor: '#60a5fa',
-        tension: 0.3,
-        pointRadius: 4,
-        spanGaps: true,
-      });
-    }
-
-    if (chartInstance) {
-      chartInstance.destroy();
-      chartInstance = null;
-    }
-
-    chartInstance = new Chart(canvas, {
+    destroy(containerId);
+    const instance = new Chart(canvas, {
       type: 'line',
       data: { labels, datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false,
-        },
+        interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: {
             labels: { color: '#a0a0a0', font: { size: 11 } },
@@ -93,7 +68,7 @@ const ChartModule = (() => {
             callbacks: {
               label: ctx => {
                 if (ctx.parsed.y === null) return null;
-                return `${ctx.dataset.label}: $${ctx.parsed.y.toFixed(2)}`;
+                return `${ctx.dataset.label}: ${currency}${ctx.parsed.y.toFixed(2)}`;
               },
             },
           },
@@ -107,7 +82,7 @@ const ChartModule = (() => {
             ticks: {
               color: '#6a6a8a',
               font: { size: 10 },
-              callback: val => `$${val}`,
+              callback: val => `${currency}${val}`,
             },
             grid: { color: 'rgba(42, 42, 74, 0.5)' },
             beginAtZero: true,
@@ -115,14 +90,44 @@ const ChartModule = (() => {
         },
       },
     });
+    instances.set(containerId, instance);
   }
 
-  function destroy() {
-    if (chartInstance) {
-      chartInstance.destroy();
-      chartInstance = null;
+  // Backward-compatible: renders TCGPlayer USD/Foil/Etched into the default container.
+  function render(priceHistory) {
+    renderSeries(
+      'price-chart-container',
+      priceHistory,
+      [
+        { key: 'usd', label: 'USD', color: '#4ade80' },
+        { key: 'usd_foil', label: 'Foil', color: '#c084fc' },
+        { key: 'usd_etched', label: 'Etched', color: '#60a5fa' },
+      ],
+      '$'
+    );
+  }
+
+  function render401(priceHistory) {
+    renderSeries(
+      'price-chart-401-container',
+      priceHistory,
+      [
+        { key: 'cad', label: 'CAD', color: '#f97316' },
+        { key: 'cad_foil', label: 'CAD Foil', color: '#f43f5e' },
+      ],
+      'C$'
+    );
+  }
+
+  function destroy(containerId) {
+    if (containerId) {
+      const inst = instances.get(containerId);
+      if (inst) { inst.destroy(); instances.delete(containerId); }
+      return;
     }
+    instances.forEach(inst => inst.destroy());
+    instances.clear();
   }
 
-  return { render, destroy };
+  return { render, render401, destroy };
 })();

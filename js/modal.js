@@ -14,6 +14,7 @@ const ModalModule = (() => {
 
   function open(card) {
     const priceHistory = DataModule.getPriceHistory(card);
+    const priceHistory401 = DataModule.getPriceHistory401(card);
 
     // Image
     const imgEl = document.getElementById('modal-image');
@@ -123,15 +124,38 @@ const ModalModule = (() => {
       linksEl.appendChild(a);
     }
 
+    if (card.url_401) {
+      const a = document.createElement('a');
+      a.className = 'modal-link';
+      a.href = card.url_401;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = '401 Games';
+      linksEl.appendChild(a);
+    }
+
+    if (card.url_401_foil) {
+      const a = document.createElement('a');
+      a.className = 'modal-link';
+      a.href = card.url_401_foil;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      a.textContent = '401 Games (Foil)';
+      linksEl.appendChild(a);
+    }
+
     // Current prices
     const pricesEl = document.getElementById('modal-prices');
     pricesEl.innerHTML = '';
-    renderPriceCard(pricesEl, 'USD', card.prices_usd, 'usd');
-    renderPriceCard(pricesEl, 'Foil', card.prices_usd_foil, 'foil');
-    renderPriceCard(pricesEl, 'Etched', card.prices_usd_etched, 'etched');
+    renderPriceCard(pricesEl, 'USD TCGP', card.prices_usd, 'usd', '$');
+    renderPriceCard(pricesEl, 'FOIL TCGP', card.prices_usd_foil, 'foil', '$');
+    renderPriceCard(pricesEl, 'ETCHED TCGP', card.prices_usd_etched, 'etched', '$');
+    renderPriceCard(pricesEl, 'CAD 401', card.price_401_cad, 'cad', 'C$');
+    renderPriceCard(pricesEl, 'CAD FOIL 401', card.price_401_cad_foil, 'cad-foil', 'C$');
 
-    // Price chart
+    // Price charts
     ChartModule.render(priceHistory);
+    ChartModule.render401(priceHistory401);
 
     // Scroll modal to top
     document.getElementById('card-modal').scrollTop = 0;
@@ -145,7 +169,8 @@ const ModalModule = (() => {
   function close() {
     backdrop.classList.remove('open');
     document.body.style.overflow = '';
-    ChartModule.destroy();
+    ChartModule.destroy('price-chart-container');
+    ChartModule.destroy('price-chart-401-container');
   }
 
   function addStat(container, label, value) {
@@ -183,15 +208,16 @@ const ModalModule = (() => {
     return val;
   }
 
-  function renderPriceCard(container, label, price, type) {
+  function renderPriceCard(container, label, price, type, currency = '$') {
     const card = document.createElement('div');
     card.className = 'price-card';
     const labelEl = document.createElement('div');
     labelEl.className = 'label';
     labelEl.textContent = label;
     const valueEl = document.createElement('div');
-    valueEl.className = `value ${price ? type : 'no-data'}`;
-    valueEl.textContent = price ? `$${parseFloat(price).toFixed(2)}` : '--';
+    const hasPrice = price !== null && price !== undefined && price !== '' && !Number.isNaN(parseFloat(price));
+    valueEl.className = `value ${hasPrice ? type : 'no-data'}`;
+    valueEl.textContent = hasPrice ? `${currency}${parseFloat(price).toFixed(2)}` : '--';
     card.appendChild(labelEl);
     card.appendChild(valueEl);
     container.appendChild(card);

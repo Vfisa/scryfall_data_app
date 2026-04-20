@@ -2,6 +2,7 @@ const App = (() => {
   let allCards = [];
   let totalCount = 0;
   let analyticsRendered = false;
+  let analytics401Rendered = false;
 
   async function init() {
     try {
@@ -13,6 +14,7 @@ const App = (() => {
       GridModule.init(onCardClick);
       ModalModule.init();
       AnalyticsModule.init(cards, priceHistoryMap, filterOptions);
+      Analytics401Module.init(cards, filterOptions);
 
       // Sort control
       document.getElementById('sort-select').addEventListener('change', e => {
@@ -100,6 +102,10 @@ const App = (() => {
           analyticsRendered = true;
           // Small delay to let the tab show before heavy rendering
           requestAnimationFrame(() => AnalyticsModule.render());
+        }
+        if (tab === '401' && !analytics401Rendered) {
+          analytics401Rendered = true;
+          requestAnimationFrame(() => Analytics401Module.render());
         }
       });
     });

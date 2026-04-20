@@ -25,6 +25,7 @@
       <nav class="header-tabs">
         <button class="tab-btn active" data-tab="browse">Browse</button>
         <button class="tab-btn" data-tab="analytics">Analytics</button>
+        <button class="tab-btn" data-tab="401">401</button>
       </nav>
     </div>
     <div class="header-row header-row-controls header-controls">
@@ -246,6 +247,135 @@
     </div>
   </div>
 
+  <!-- ========== 401 TAB ========== -->
+  <div id="tab-401" class="tab-page">
+    <div class="analytics-page">
+
+      <!-- 401 filters bar -->
+      <div class="analytics-filters">
+        <div class="af-group">
+          <label class="af-label">Price Type</label>
+          <div class="af-radios" id="af401-price-type">
+            <label class="af-radio active"><input type="radio" name="af401-price" value="cad" checked> CAD</label>
+            <label class="af-radio"><input type="radio" name="af401-price" value="cad_foil"> CAD Foil</label>
+          </div>
+        </div>
+        <div class="af-group">
+          <label class="af-label">Min Price</label>
+          <input type="number" id="af401-min-price" class="af-input" value="0.25" min="0" step="0.25">
+        </div>
+        <div class="af-group">
+          <label class="af-label">Set</label>
+          <select id="af401-set" class="af-select">
+            <option value="">All Sets</option>
+          </select>
+        </div>
+        <div class="af-group">
+          <label class="af-label">Rarity</label>
+          <select id="af401-rarity" class="af-select">
+            <option value="">All Rarities</option>
+            <option value="common">Common</option>
+            <option value="uncommon">Uncommon</option>
+            <option value="rare">Rare</option>
+            <option value="mythic">Mythic</option>
+          </select>
+        </div>
+        <div class="af-group">
+          <label class="af-label">Include</label>
+          <div class="af-toggles" id="af401-include-toggles">
+            <button class="af-toggle active" data-key="regular">Regular</button>
+            <button class="af-toggle active" data-key="fullArt">Full Art</button>
+            <button class="af-toggle active" data-key="borderless">Borderless</button>
+            <button class="af-toggle active" data-key="foil">Foil-only</button>
+            <button class="af-toggle active" data-key="japanese">Japanese</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 1: Market Overview -->
+      <section class="analytics-section">
+        <h2 class="section-title">Market Overview (401)</h2>
+        <div id="market-overview-401" class="overview-grid"></div>
+      </section>
+
+      <!-- Section 1b: Total Market Value Over Time -->
+      <section class="analytics-section">
+        <h2 class="section-title">Total Market Value Over Time (401)</h2>
+        <div class="chart-container-wide">
+          <canvas id="chart-market-value-trend-401"></canvas>
+        </div>
+      </section>
+
+      <!-- Section 2: Top Movers -->
+      <section class="analytics-section">
+        <h2 class="section-title">Top Movers (401)</h2>
+        <div class="movers-grid">
+          <div class="movers-col">
+            <h3 class="movers-heading gainers">Top 10 Gainers</h3>
+            <div id="top-gainers-401" class="movers-table-wrap"></div>
+          </div>
+          <div class="movers-col">
+            <h3 class="movers-heading losers">Top 10 Losers</h3>
+            <div id="top-losers-401" class="movers-table-wrap"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Price Distribution -->
+      <section class="analytics-section">
+        <h2 class="section-title">Price Distribution (401)</h2>
+        <div class="chart-container-wide">
+          <canvas id="chart-distribution-401"></canvas>
+        </div>
+      </section>
+
+      <!-- Section 4: Price Trends Over Time -->
+      <section class="analytics-section">
+        <h2 class="section-title">Price Trends Over Time (401)</h2>
+        <div class="charts-row">
+          <div class="chart-half">
+            <h4 class="chart-subtitle">Average Price by Rarity</h4>
+            <div class="chart-container">
+              <canvas id="chart-trend-rarity-401"></canvas>
+            </div>
+          </div>
+          <div class="chart-half">
+            <h4 class="chart-subtitle">Average Price by Set</h4>
+            <div class="chart-container">
+              <canvas id="chart-trend-set-401"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Rarity Breakdown -->
+      <section class="analytics-section">
+        <h2 class="section-title">Rarity Breakdown (401)</h2>
+        <div class="charts-row">
+          <div class="chart-half">
+            <h4 class="chart-subtitle">Share of Total Market Value</h4>
+            <div class="chart-container chart-container-sq">
+              <canvas id="chart-rarity-donut-401"></canvas>
+            </div>
+          </div>
+          <div class="chart-half">
+            <h4 class="chart-subtitle">Average Price by Rarity</h4>
+            <div class="chart-container">
+              <canvas id="chart-rarity-bar-401"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 6: Most Valuable Cards -->
+      <section class="analytics-section">
+        <h2 class="section-title">Most Valuable Cards (401)</h2>
+        <div id="valuable-table-wrap-401" class="valuable-table-wrap"></div>
+      </section>
+
+    </div>
+  </div>
+
   <!-- Card detail modal -->
   <div id="card-modal-backdrop">
     <div id="card-modal">
@@ -271,8 +401,12 @@
             <div id="modal-prices" class="modal-prices"></div>
           </div>
           <div class="modal-chart-section">
-            <h4>Price History</h4>
+            <h4>Price History TCGPlayer</h4>
             <div id="price-chart-container"></div>
+          </div>
+          <div class="modal-chart-section">
+            <h4>Price History 401</h4>
+            <div id="price-chart-401-container"></div>
           </div>
         </div>
       </div>
@@ -304,6 +438,7 @@
   <script src="js/chart.js"></script>
   <script src="js/modal.js"></script>
   <script src="js/analytics.js"></script>
+  <script src="js/analytics-401.js"></script>
   <script src="js/app.js"></script>
 
 </body>

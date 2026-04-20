@@ -15,6 +15,8 @@ const TABLES = {
   cards: 'out.c-scryfall.cards',
   snapshots: 'out.c-scryfall.cards_price_snapshot',
   tcgplayer: 'out.c-scryfall.TCGPlayer_sealed_guide',
+  cardPrices401: 'in.c-401games.card_prices',
+  mapping401: 'out.c-401games.401_mapping',
 };
 
 // In-memory cache
@@ -22,6 +24,8 @@ const cache = {
   cards: { data: null, fetchedAt: 0 },
   snapshots: { data: null, fetchedAt: 0 },
   tcgplayer: { data: null, fetchedAt: 0 },
+  cardPrices401: { data: null, fetchedAt: 0 },
+  mapping401: { data: null, fetchedAt: 0 },
 };
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -177,13 +181,33 @@ app.get('/api/tables/tcgplayer', async (req, res) => {
   }
 });
 
+app.get('/api/tables/card-prices-401', async (req, res) => {
+  try {
+    const csv = await getCachedTable('cardPrices401');
+    res.set('Content-Type', 'text/csv');
+    res.send(csv);
+  } catch (err) {
+    console.error('Error fetching 401 card prices:', err.message);
+    res.status(502).json({ error: 'Failed to fetch 401 card prices from Keboola Storage', detail: err.message });
+  }
+});
+
+app.get('/api/tables/mapping-401', async (req, res) => {
+  try {
+    const csv = await getCachedTable('mapping401');
+    res.set('Content-Type', 'text/csv');
+    res.send(csv);
+  } catch (err) {
+    console.error('Error fetching 401 mapping:', err.message);
+    res.status(502).json({ error: 'Failed to fetch 401 mapping from Keboola Storage', detail: err.message });
+  }
+});
+
 // Force cache refresh
 app.post('/api/refresh', async (req, res) => {
   try {
-    cache.cards.fetchedAt = 0;
-    cache.snapshots.fetchedAt = 0;
-    cache.tcgplayer.fetchedAt = 0;
-    await Promise.all([getCachedTable('cards'), getCachedTable('snapshots'), getCachedTable('tcgplayer')]);
+    Object.keys(cache).forEach(k => { cache[k].fetchedAt = 0; });
+    await Promise.all(Object.keys(cache).map(k => getCachedTable(k)));
     res.json({ status: 'ok', message: 'Cache refreshed' });
   } catch (err) {
     res.status(502).json({ error: 'Failed to refresh', detail: err.message });
@@ -319,7 +343,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`KBC_TOKEN: ${KBC_TOKEN ? '***set***' : 'NOT SET'}`);
 
   // Pre-warm cache on startup
-  Promise.all([getCachedTable('cards'), getCachedTable('snapshots'), getCachedTable('tcgplayer')])
+  Promise.all(Object.keys(cache).map(k => getCachedTable(k)))
     .then(() => console.log('Cache pre-warmed successfully'))
     .catch(err => console.warn('Cache pre-warm failed (will retry on first request):', err.message));
 });

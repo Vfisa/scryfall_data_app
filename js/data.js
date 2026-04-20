@@ -1,6 +1,8 @@
 const DataModule = (() => {
   let cards = [];
   let priceHistoryMap = new Map();
+  let priceHistory401Map = new Map();
+  let snapshotDates401 = [];
   let filterOptions = {};
 
   function safeJsonParse(val) {
@@ -57,6 +59,11 @@ const DataModule = (() => {
       frame_effects: row.frame_effects || '',
       tcgplayer_grade: '',
       tcgplayer_commentary: '',
+      has_401: false,
+      url_401: null,
+      url_401_foil: null,
+      price_401_cad: null,
+      price_401_cad_foil: null,
     };
   }
 
@@ -110,6 +117,114 @@ const DataModule = (() => {
     };
   }
 
+  // Parse "$5.00 CAD" → 5.0 (number). Returns null for empty / unparseable.
+  function parseCadPrice(raw) {
+    if (!raw) return null;
+    const match = String(raw).match(/[\d.]+/);
+    if (!match) return null;
+    const v = parseFloat(match[0]);
+    return Number.isFinite(v) ? v : null;
+  }
+
+  // Build map: scryfall_id → { nonFoil?: {product_id, variant_id, product_url}, foil?: {...} }
+  function build401Mapping(rows) {
+    const map = new Map();
+    rows.forEach(row => {
+      const scryfallId = row.scryfall_id;
+      if (!scryfallId) return;
+      const key = parseBool(row.is_foil) ? 'foil' : 'nonFoil';
+      if (!map.has(scryfallId)) map.set(scryfallId, {});
+      map.get(scryfallId)[key] = {
+        product_id: row.product_id || '',
+        variant_id: row.variant_id || '',
+        product_url: row.product_url || '',
+      };
+    });
+    return map;
+  }
+
+  // Build map: 'product_id|variant_id' → [{date: 'YYYY-MM-DD', cad: number}] sorted by date.
+  // If multiple scrapes exist for the same product on the same day, the latest timestamp wins.
+  function build401PriceHistory(rows) {
+    const byProduct = new Map(); // 'pid|vid' → Map<date, { ts, cad }>
+    rows.forEach(row => {
+      const pid = row.product_id || '';
+      const vid = row.variant_id || '';
+      const ts = row.scrape_datetime || '';
+      if (!pid || !vid || !ts) return;
+      const date = ts.slice(0, 10);
+      const cad = parseCadPrice(row.price);
+      if (cad === null) return;
+      const key = `${pid}|${vid}`;
+      if (!byProduct.has(key)) byProduct.set(key, new Map());
+      const dayMap = byProduct.get(key);
+      const existing = dayMap.get(date);
+      if (!existing || ts > existing.ts) {
+        dayMap.set(date, { ts, cad });
+      }
+    });
+
+    const out = new Map();
+    byProduct.forEach((dayMap, key) => {
+      const arr = [...dayMap.entries()]
+        .map(([date, { cad }]) => ({ date, cad }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+      out.set(key, arr);
+    });
+    return out;
+  }
+
+  function apply401Data(cards, mapping, priceHistMap) {
+    cards.forEach(card => {
+      const m = mapping.get(card.id);
+      if (!m) return;
+      card.has_401 = true;
+      if (m.nonFoil) {
+        card.url_401 = m.nonFoil.product_url || null;
+        const hist = priceHistMap.get(`${m.nonFoil.product_id}|${m.nonFoil.variant_id}`);
+        if (hist && hist.length) card.price_401_cad = hist[hist.length - 1].cad;
+      }
+      if (m.foil) {
+        card.url_401_foil = m.foil.product_url || null;
+        const hist = priceHistMap.get(`${m.foil.product_id}|${m.foil.variant_id}`);
+        if (hist && hist.length) card.price_401_cad_foil = hist[hist.length - 1].cad;
+      }
+    });
+  }
+
+  // Per-card merged history: [{date, cad, cad_foil}] — outer join of the two variants on date.
+  function build401PerCardHistory(cards, mapping, priceHistMap) {
+    const perCard = new Map();
+    cards.forEach(card => {
+      const m = mapping.get(card.id);
+      if (!m) return;
+      const nonFoilHist = m.nonFoil ? (priceHistMap.get(`${m.nonFoil.product_id}|${m.nonFoil.variant_id}`) || []) : [];
+      const foilHist = m.foil ? (priceHistMap.get(`${m.foil.product_id}|${m.foil.variant_id}`) || []) : [];
+      if (!nonFoilHist.length && !foilHist.length) return;
+
+      const dates = new Set();
+      nonFoilHist.forEach(p => dates.add(p.date));
+      foilHist.forEach(p => dates.add(p.date));
+
+      const nfByDate = new Map(nonFoilHist.map(p => [p.date, p.cad]));
+      const fByDate = new Map(foilHist.map(p => [p.date, p.cad]));
+
+      const merged = [...dates].sort().map(d => ({
+        date: d,
+        cad: nfByDate.has(d) ? nfByDate.get(d) : null,
+        cad_foil: fByDate.has(d) ? fByDate.get(d) : null,
+      }));
+      perCard.set(card.id, merged);
+    });
+    return perCard;
+  }
+
+  function computeSnapshotDates401(priceHistMap) {
+    const dates = new Set();
+    priceHistMap.forEach(arr => arr.forEach(p => dates.add(p.date)));
+    return [...dates].sort();
+  }
+
   function buildPriceHistory(snapshots) {
     const map = new Map();
     snapshots.forEach(row => {
@@ -139,11 +254,19 @@ const DataModule = (() => {
   }
 
   async function load() {
-    const [cardsRaw, snapshotsRaw, tcgplayerRaw] = await Promise.all([
+    const [cardsRaw, snapshotsRaw, tcgplayerRaw, cardPrices401Raw, mapping401Raw] = await Promise.all([
       loadCSV('/api/tables/cards'),
       loadCSV('/api/tables/snapshots'),
       loadCSV('/api/tables/tcgplayer').catch(err => {
         console.warn('Failed to load tcgplayer data:', err);
+        return [];
+      }),
+      loadCSV('/api/tables/card-prices-401').catch(err => {
+        console.warn('Failed to load 401 card prices:', err);
+        return [];
+      }),
+      loadCSV('/api/tables/mapping-401').catch(err => {
+        console.warn('Failed to load 401 mapping:', err);
         return [];
       }),
     ]);
@@ -152,6 +275,13 @@ const DataModule = (() => {
     priceHistoryMap = buildPriceHistory(snapshotsRaw);
     const tcgMap = buildTcgplayerMap(tcgplayerRaw);
     applyTcgplayerData(cards, tcgMap);
+
+    const mapping401 = build401Mapping(mapping401Raw);
+    const priceHist401 = build401PriceHistory(cardPrices401Raw);
+    apply401Data(cards, mapping401, priceHist401);
+    priceHistory401Map = build401PerCardHistory(cards, mapping401, priceHist401);
+    snapshotDates401 = computeSnapshotDates401(priceHist401);
+
     filterOptions = buildFilterOptions(cards);
 
     return { cards, priceHistoryMap, filterOptions };
@@ -162,5 +292,13 @@ const DataModule = (() => {
     return priceHistoryMap.get(key) || [];
   }
 
-  return { load, getPriceHistory };
+  function getPriceHistory401(card) {
+    return priceHistory401Map.get(card.id) || [];
+  }
+
+  function getSnapshotDates401() {
+    return snapshotDates401;
+  }
+
+  return { load, getPriceHistory, getPriceHistory401, getSnapshotDates401 };
 })();
