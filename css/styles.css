@@ -830,6 +830,80 @@ body.on-analytics-tab #card-count {
 .ov-value.stat-red { color: #ef4444; }
 .ov-value.stat-muted { color: var(--text-muted); }
 
+.overview-card-clickable {
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+  position: relative;
+}
+.overview-card-clickable:hover {
+  border-color: var(--accent-gold);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3), 0 0 14px var(--glow-gold);
+}
+.overview-card-clickable .ov-label {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.ov-hint {
+  color: var(--accent-gold);
+  font-size: 13px;
+  opacity: 0.65;
+  transition: opacity 0.15s;
+}
+.overview-card-clickable:hover .ov-hint { opacity: 1; }
+
+/* Total Market Value popup */
+.market-value-modal-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 300;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.market-value-modal-backdrop.open { display: flex; }
+.market-value-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 22px 24px 26px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+}
+.market-value-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 8px;
+}
+.market-value-modal-header h3 {
+  font-size: 18px; font-weight: 700; color: var(--text-primary);
+  background: linear-gradient(135deg, var(--accent-gold), var(--accent-warm));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.market-value-modal-close {
+  background: transparent; border: none;
+  color: var(--text-secondary);
+  font-size: 28px; line-height: 1;
+  width: 36px; height: 36px;
+  cursor: pointer; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+}
+.market-value-modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+.market-value-modal-total {
+  font-size: 13px; color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+.market-value-modal-chart-wrap {
+  height: 360px;
+}
+@media (max-width: 600px) {
+  .market-value-modal { padding: 16px; }
+  .market-value-modal-chart-wrap { height: 280px; }
+}
+
 /* Movers */
 .movers-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .movers-heading {

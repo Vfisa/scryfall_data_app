@@ -46,6 +46,7 @@ const AnalyticsModule = (() => {
       });
     });
 
+    initMarketValueModal();
     initialized = true;
   }
 
@@ -55,6 +56,7 @@ const AnalyticsModule = (() => {
     const cards = filterCards(opts);
 
     renderOverview(cards, opts);
+    renderMarketValueTrend(cards, opts, 'chart-market-value-trend', 'trendMarketValue');
     renderMovers(cards, opts);
     renderDistribution(cards, opts);
     renderTrendByRarity(opts);
@@ -163,7 +165,7 @@ const AnalyticsModule = (() => {
     container.innerHTML = '';
     const stats = [
       { label: 'Cards Tracked', value: priced.length.toLocaleString(), cls: '' },
-      { label: 'Total Market Value', value: `$${total.toFixed(2)}`, cls: '' },
+      { label: 'Total Market Value', value: `$${total.toFixed(2)}`, cls: '', clickable: 'market-value' },
       { label: 'Average Price', value: `$${avg.toFixed(2)}`, cls: '' },
       { label: 'Median Price', value: `$${median.toFixed(2)}`, cls: '' },
       { label: 'Rising', value: rising.toLocaleString(), cls: 'stat-green' },
@@ -172,10 +174,114 @@ const AnalyticsModule = (() => {
     ];
     stats.forEach(s => {
       const card = document.createElement('div');
-      card.className = 'overview-card';
-      card.innerHTML = `<div class="ov-label">${s.label}</div><div class="ov-value ${s.cls}">${s.value}</div>`;
+      card.className = 'overview-card' + (s.clickable ? ' overview-card-clickable' : '');
+      const hint = s.clickable ? '<span class="ov-hint" title="View trend over time">&#8599;</span>' : '';
+      card.innerHTML = `<div class="ov-label">${s.label}${hint}</div><div class="ov-value ${s.cls}">${s.value}</div>`;
+      if (s.clickable === 'market-value') {
+        card.addEventListener('click', () => openMarketValueModal(total));
+      }
       container.appendChild(card);
     });
+  }
+
+  // ===== Section 1b: Total Market Value Over Time =====
+  function renderMarketValueTrend(cards, opts, canvasId, chartKey) {
+    const snapDates = getSnapshotDates();
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    if (snapDates.length < 1) {
+      destroyChart(chartKey);
+      return;
+    }
+
+    // Sum of all filtered card prices at each snapshot date.
+    // Respects set/rarity/include filters plus min-price threshold at the
+    // per-snapshot level — i.e. a card only contributes to a given day's
+    // total if its price on that day meets the min-price floor.
+    const totals = snapDates.map(date => {
+      let sum = 0;
+      cards.forEach(c => {
+        const hist = getHistory(c);
+        const snap = hist.find(h => h.date === date);
+        if (snap) {
+          const v = parseFloat(snap[opts.snapshotField]) || 0;
+          if (v >= opts.minPrice) sum += v;
+        }
+      });
+      return Math.round(sum * 100) / 100;
+    });
+
+    destroyChart(chartKey);
+    charts[chartKey] = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: snapDates,
+        datasets: [{
+          label: 'Total Market Value',
+          data: totals,
+          borderColor: '#d4a932',
+          backgroundColor: 'rgba(212,169,50,0.15)',
+          tension: 0.3,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: true,
+          spanGaps: true,
+        }],
+      },
+      options: {
+        ...chartDefaults(),
+        scales: {
+          x: scaleDef(),
+          y: {
+            ...scaleDef(), beginAtZero: true,
+            ticks: { ...scaleDef().ticks, callback: v => `$${Number(v).toLocaleString()}` },
+          },
+        },
+        plugins: {
+          ...chartDefaults().plugins,
+          legend: { display: false },
+          tooltip: {
+            ...chartDefaults().plugins.tooltip,
+            callbacks: {
+              label: ctx => `Total: $${Number(ctx.parsed.y).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  function initMarketValueModal() {
+    const backdrop = document.getElementById('market-value-modal-backdrop');
+    const closeBtn = document.getElementById('market-value-modal-close');
+    if (!backdrop || !closeBtn) return;
+    closeBtn.addEventListener('click', closeMarketValueModal);
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) closeMarketValueModal(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && backdrop.classList.contains('open')) closeMarketValueModal();
+    });
+  }
+
+  function openMarketValueModal(currentTotal) {
+    const backdrop = document.getElementById('market-value-modal-backdrop');
+    const totalEl = document.getElementById('market-value-modal-total');
+    if (!backdrop) return;
+    if (totalEl) totalEl.textContent = `Current: $${Number(currentTotal).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // Re-render chart into the modal canvas with the latest filter state
+    const opts = getFilterOpts();
+    const cards = filterCards(opts);
+    renderMarketValueTrend(cards, opts, 'chart-market-value-trend-modal', 'trendMarketValueModal');
+  }
+
+  function closeMarketValueModal() {
+    const backdrop = document.getElementById('market-value-modal-backdrop');
+    if (!backdrop) return;
+    backdrop.classList.remove('open');
+    document.body.style.overflow = '';
+    destroyChart('trendMarketValueModal');
   }
 
   // ===== Section 2: Top Movers =====
@@ -540,8 +646,7 @@ const AnalyticsModule = (() => {
     document.querySelector('.tab-btn[data-tab="browse"]').classList.add('active');
     document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
     document.getElementById('tab-browse').classList.add('active');
-    document.querySelector('.header-controls').style.display = 'flex';
-    document.getElementById('card-count').style.display = 'inline';
+    document.body.classList.remove('on-analytics-tab');
 
     // Set artist filter
     FiltersModule.setArtist(artistName);

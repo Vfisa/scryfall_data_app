@@ -160,6 +160,14 @@
         <div id="market-overview" class="overview-grid"></div>
       </section>
 
+      <!-- Section 1b: Total Market Value Over Time -->
+      <section class="analytics-section">
+        <h2 class="section-title">Total Market Value Over Time</h2>
+        <div class="chart-container-wide">
+          <canvas id="chart-market-value-trend"></canvas>
+        </div>
+      </section>
+
       <!-- Section 2: Top Movers -->
       <section class="analytics-section">
         <h2 class="section-title">Top Movers</h2>
@@ -267,6 +275,20 @@
             <div id="price-chart-container"></div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Market value detail popup -->
+  <div id="market-value-modal-backdrop" class="market-value-modal-backdrop">
+    <div id="market-value-modal" class="market-value-modal">
+      <div class="market-value-modal-header">
+        <h3>Total Market Value Over Time</h3>
+        <button id="market-value-modal-close" class="market-value-modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="market-value-modal-total" id="market-value-modal-total"></div>
+      <div class="chart-container-wide market-value-modal-chart-wrap">
+        <canvas id="chart-market-value-trend-modal"></canvas>
       </div>
     </div>
   </div>
