@@ -136,9 +136,10 @@ const ModalModule = (() => {
     renderPriceCard(pricesEl, 'CAD 401', card.price_401_cad, 'cad', 'C$');
     renderPriceCard(pricesEl, 'CAD FOIL 401', card.price_401_cad_foil, 'cad-foil', 'C$');
 
-    // Price charts
-    ChartModule.render(priceHistory);
-    ChartModule.render401(priceHistory401);
+    // Price charts — shared X axis: union of dates from both series, last 14 days.
+    const sharedDates = buildSharedDateRange(priceHistory, priceHistory401, 14);
+    ChartModule.render(projectSeries(priceHistory, sharedDates));
+    ChartModule.render401(projectSeries(priceHistory401, sharedDates));
 
     // Scroll modal to top
     document.getElementById('card-modal').scrollTop = 0;
@@ -189,6 +190,23 @@ const ModalModule = (() => {
       }
     } catch {}
     return val;
+  }
+
+  // Union of dates from both price-history arrays, sorted, trimmed to the most recent `maxDays`.
+  // Ensures both modal charts share the same X-axis window.
+  function buildSharedDateRange(h1, h2, maxDays) {
+    const all = new Set();
+    h1.forEach(p => { if (p.date) all.add(p.date); });
+    h2.forEach(p => { if (p.date) all.add(p.date); });
+    const sorted = [...all].sort();
+    return sorted.slice(-maxDays);
+  }
+
+  // Reindex a price-history series onto the given date list. Missing dates yield
+  // a `{date}` stub so Chart.js (with spanGaps) renders a gap at that x tick.
+  function projectSeries(hist, dates) {
+    const byDate = new Map(hist.map(p => [p.date, p]));
+    return dates.map(d => byDate.get(d) || { date: d });
   }
 
   function renderPriceCard(container, label, price, type, currency = '$') {
