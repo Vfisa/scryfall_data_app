@@ -132,6 +132,10 @@ const GridModule = (() => {
         return cards.sort((a, b) => (parseFloat(b.prices_usd) || 0) - (parseFloat(a.prices_usd) || 0));
       case 'price-asc':
         return cards.sort((a, b) => (parseFloat(a.prices_usd) || 0) - (parseFloat(b.prices_usd) || 0));
+      case 'price-401-desc':
+        return cards.sort((a, b) => (parseFloat(b.price_401_cad) || 0) - (parseFloat(a.price_401_cad) || 0));
+      case 'price-401-asc':
+        return cards.sort((a, b) => (parseFloat(a.price_401_cad) || 0) - (parseFloat(b.price_401_cad) || 0));
       case 'rarity':
         const order = { mythic: 0, rare: 1, uncommon: 2, common: 3 };
         return cards.sort((a, b) => (order[a.rarity] ?? 4) - (order[b.rarity] ?? 4));

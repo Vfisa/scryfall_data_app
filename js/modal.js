@@ -100,49 +100,32 @@ const ModalModule = (() => {
       }
     }
 
-    // Links (under image)
+    // Links (under image) — two rows: primary (Scryfall + TCGplayer), 401 (401 + 401 Foil)
     const linksEl = document.getElementById('modal-links');
     linksEl.innerHTML = '';
 
-    if (card.scryfall_uri) {
-      const a = document.createElement('a');
-      a.className = 'modal-link';
-      a.href = card.scryfall_uri;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.textContent = 'Scryfall';
-      linksEl.appendChild(a);
-    }
+    const primaryRow = document.createElement('div');
+    primaryRow.className = 'modal-links-row';
+    const row401 = document.createElement('div');
+    row401.className = 'modal-links-row';
 
-    if (card.tcgplayer_id) {
+    const addLink = (row, href, text) => {
       const a = document.createElement('a');
       a.className = 'modal-link';
-      a.href = `https://www.tcgplayer.com/product/${card.tcgplayer_id}/`;
+      a.href = href;
       a.target = '_blank';
       a.rel = 'noopener';
-      a.textContent = 'TCGplayer';
-      linksEl.appendChild(a);
-    }
+      a.textContent = text;
+      row.appendChild(a);
+    };
 
-    if (card.url_401) {
-      const a = document.createElement('a');
-      a.className = 'modal-link';
-      a.href = card.url_401;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.textContent = '401 Games';
-      linksEl.appendChild(a);
-    }
+    if (card.scryfall_uri) addLink(primaryRow, card.scryfall_uri, 'Scryfall');
+    if (card.tcgplayer_id) addLink(primaryRow, `https://www.tcgplayer.com/product/${card.tcgplayer_id}/`, 'TCGplayer');
+    if (card.url_401) addLink(row401, card.url_401, '401 Games');
+    if (card.url_401_foil) addLink(row401, card.url_401_foil, '401 Games (Foil)');
 
-    if (card.url_401_foil) {
-      const a = document.createElement('a');
-      a.className = 'modal-link';
-      a.href = card.url_401_foil;
-      a.target = '_blank';
-      a.rel = 'noopener';
-      a.textContent = '401 Games (Foil)';
-      linksEl.appendChild(a);
-    }
+    if (primaryRow.children.length) linksEl.appendChild(primaryRow);
+    if (row401.children.length) linksEl.appendChild(row401);
 
     // Current prices
     const pricesEl = document.getElementById('modal-prices');
