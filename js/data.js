@@ -59,6 +59,7 @@ const DataModule = (() => {
       frame_effects: row.frame_effects || '',
       tcgplayer_grade: '',
       tcgplayer_commentary: '',
+      tips: [],
       has_401: false,
       url_401: null,
       url_401_foil: null,
@@ -79,6 +80,28 @@ const DataModule = (() => {
       });
     });
     return map;
+  }
+
+  function buildTipsMap(rows) {
+    const map = new Map();
+    rows.forEach(row => {
+      const set = (row.set || '').toLowerCase();
+      const num = row.collector_number || '';
+      if (!set || !num) return;
+      const tips = [row.tip_1, row.tip_2, row.tip_3, row.tip_4]
+        .map(t => (t || '').trim())
+        .filter(Boolean);
+      if (tips.length) map.set(`${set}|${num}`, tips);
+    });
+    return map;
+  }
+
+  function applyTips(cards, tipsMap) {
+    cards.forEach(card => {
+      const key = `${(card.set || '').toLowerCase()}|${card.collector_number}`;
+      const t = tipsMap.get(key);
+      if (t) card.tips = t;
+    });
   }
 
   function applyTcgplayerData(cards, tcgMap) {
@@ -254,11 +277,15 @@ const DataModule = (() => {
   }
 
   async function load() {
-    const [cardsRaw, snapshotsRaw, tcgplayerRaw, cardPrices401Raw, mapping401Raw] = await Promise.all([
+    const [cardsRaw, snapshotsRaw, tcgplayerRaw, tipsRaw, cardPrices401Raw, mapping401Raw] = await Promise.all([
       loadCSV('/api/tables/cards'),
       loadCSV('/api/tables/snapshots'),
       loadCSV('/api/tables/tcgplayer').catch(err => {
         console.warn('Failed to load tcgplayer data:', err);
+        return [];
+      }),
+      loadCSV('/api/tables/strixhaven-tips').catch(err => {
+        console.warn('Failed to load strixhaven tips:', err);
         return [];
       }),
       loadCSV('/api/tables/card-prices-401').catch(err => {
@@ -275,6 +302,8 @@ const DataModule = (() => {
     priceHistoryMap = buildPriceHistory(snapshotsRaw);
     const tcgMap = buildTcgplayerMap(tcgplayerRaw);
     applyTcgplayerData(cards, tcgMap);
+    const tipsMap = buildTipsMap(tipsRaw);
+    applyTips(cards, tipsMap);
 
     const mapping401 = build401Mapping(mapping401Raw);
     const priceHist401 = build401PriceHistory(cardPrices401Raw);

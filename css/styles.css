@@ -512,37 +512,50 @@ body.on-analytics-tab #card-count {
   font-weight: 700; color: var(--text-primary); font-size: 13px;
 }
 
-/* TCGPlayer sealed guide */
-.modal-tcgplayer-section:empty {
+/* Notes (TCGPlayer commentary + Strixhaven tips, merged) */
+.modal-notes-section:empty {
   display: none;
 }
-.modal-tcgplayer-section {
+.modal-notes-section {
   margin-bottom: 20px;
 }
-.modal-tcgplayer-heading {
+.modal-notes-heading {
   font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
-  color: var(--text-muted); margin-bottom: 10px; font-weight: 700;
+  color: var(--text-muted); margin-bottom: 8px; font-weight: 700;
 }
-.modal-tcgplayer-grade {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--bg-primary); border: 1px solid var(--border);
-  border-radius: 8px; padding: 8px 12px; margin-bottom: 8px;
+.modal-notes-grade {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: transparent; border: 1px solid var(--border);
+  border-radius: 999px; padding: 3px 10px; margin-bottom: 8px;
 }
-.modal-tcgplayer-grade-label {
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+.modal-notes-grade-label {
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;
   color: var(--text-muted);
 }
-.modal-tcgplayer-grade-value {
-  font-size: 13px; font-weight: 700; color: var(--accent-gold);
+.modal-notes-grade-value {
+  font-size: 11px; font-weight: 700; color: var(--accent-gold);
 }
-.modal-tcgplayer-commentary {
-  font-size: 13px; line-height: 1.5;
-  color: var(--text-secondary);
-  padding: 10px 14px;
-  background: linear-gradient(90deg, var(--glow-gold), transparent);
-  border-left: 3px solid var(--accent-gold);
-  border-radius: 0 6px 6px 0;
+.modal-notes-list {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.modal-note {
+  font-size: 12px; line-height: 1.45;
+  color: var(--text-muted);
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.015);
+  border-left: 2px solid var(--border);
+  border-radius: 0 4px 4px 0;
   white-space: pre-wrap;
+}
+.modal-note-source {
+  display: inline-block;
+  font-size: 9px; text-transform: uppercase; letter-spacing: 0.6px;
+  color: var(--text-muted); opacity: 0.7;
+  margin-right: 8px;
+}
+.modal-note-body {
+  color: var(--text-secondary);
 }
 
 /* Price cards */

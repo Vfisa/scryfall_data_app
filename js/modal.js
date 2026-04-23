@@ -69,35 +69,56 @@ const ModalModule = (() => {
     if (card.border_color) addStat(statsEl, 'Border', card.border_color);
     addStat(statsEl, 'Finishes', formatFinishes(card));
 
-    // TCGPlayer grade + commentary
-    const tcgEl = document.getElementById('modal-tcgplayer-section');
-    tcgEl.innerHTML = '';
-    if (card.tcgplayer_grade || card.tcgplayer_commentary) {
+    // Unified Notes — TCGPlayer grade badge + merged list of TCGPlayer commentary
+    // and Strixhaven tips, each labeled with its source. Rendered subtly.
+    const notesEl = document.getElementById('modal-notes-section');
+    notesEl.innerHTML = '';
+
+    const hasAnyNote = card.tcgplayer_grade
+      || card.tcgplayer_commentary
+      || (card.tips && card.tips.length);
+
+    if (hasAnyNote) {
       const heading = document.createElement('h4');
-      heading.className = 'modal-tcgplayer-heading';
-      heading.textContent = 'TCGPlayer sealed guide';
-      tcgEl.appendChild(heading);
+      heading.className = 'modal-notes-heading';
+      heading.textContent = 'Notes';
+      notesEl.appendChild(heading);
 
       if (card.tcgplayer_grade) {
         const gradeEl = document.createElement('div');
-        gradeEl.className = 'modal-tcgplayer-grade';
+        gradeEl.className = 'modal-notes-grade';
         const gradeLabel = document.createElement('span');
-        gradeLabel.className = 'modal-tcgplayer-grade-label';
-        gradeLabel.textContent = 'Grade:';
+        gradeLabel.className = 'modal-notes-grade-label';
+        gradeLabel.textContent = 'TCGPlayer Grade';
         const gradeValue = document.createElement('span');
-        gradeValue.className = 'modal-tcgplayer-grade-value';
+        gradeValue.className = 'modal-notes-grade-value';
         gradeValue.textContent = card.tcgplayer_grade;
         gradeEl.appendChild(gradeLabel);
         gradeEl.appendChild(gradeValue);
-        tcgEl.appendChild(gradeEl);
+        notesEl.appendChild(gradeEl);
       }
 
-      if (card.tcgplayer_commentary) {
-        const commentEl = document.createElement('div');
-        commentEl.className = 'modal-tcgplayer-commentary';
-        commentEl.textContent = card.tcgplayer_commentary;
-        tcgEl.appendChild(commentEl);
-      }
+      const list = document.createElement('ul');
+      list.className = 'modal-notes-list';
+
+      const addNote = (source, text) => {
+        const li = document.createElement('li');
+        li.className = 'modal-note';
+        const src = document.createElement('span');
+        src.className = 'modal-note-source';
+        src.textContent = source;
+        const body = document.createElement('span');
+        body.className = 'modal-note-body';
+        body.textContent = text;
+        li.appendChild(src);
+        li.appendChild(body);
+        list.appendChild(li);
+      };
+
+      if (card.tcgplayer_commentary) addNote('TCGPlayer', card.tcgplayer_commentary);
+      (card.tips || []).forEach(t => addNote('cardgamebase', t));
+
+      if (list.children.length) notesEl.appendChild(list);
     }
 
     // Links (under image) — two rows: primary (Scryfall + TCGplayer), 401 (401 + 401 Foil)

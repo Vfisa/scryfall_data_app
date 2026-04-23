@@ -15,6 +15,7 @@ const TABLES = {
   cards: 'out.c-scryfall.cards',
   snapshots: 'out.c-scryfall.cards_price_snapshot',
   tcgplayer: 'out.c-scryfall.TCGPlayer_sealed_guide',
+  strixhavenTips: 'out.c-scryfall.strixhaven_tips_with_set',
   cardPrices401: 'in.c-401games.card_prices',
   mapping401: 'out.c-401games.401_mapping',
 };
@@ -24,6 +25,7 @@ const cache = {
   cards: { data: null, fetchedAt: 0 },
   snapshots: { data: null, fetchedAt: 0 },
   tcgplayer: { data: null, fetchedAt: 0 },
+  strixhavenTips: { data: null, fetchedAt: 0 },
   cardPrices401: { data: null, fetchedAt: 0 },
   mapping401: { data: null, fetchedAt: 0 },
 };
@@ -178,6 +180,17 @@ app.get('/api/tables/tcgplayer', async (req, res) => {
   } catch (err) {
     console.error('Error fetching tcgplayer:', err.message);
     res.status(502).json({ error: 'Failed to fetch tcgplayer from Keboola Storage', detail: err.message });
+  }
+});
+
+app.get('/api/tables/strixhaven-tips', async (req, res) => {
+  try {
+    const csv = await getCachedTable('strixhavenTips');
+    res.set('Content-Type', 'text/csv');
+    res.send(csv);
+  } catch (err) {
+    console.error('Error fetching strixhaven tips:', err.message);
+    res.status(502).json({ error: 'Failed to fetch strixhaven tips from Keboola Storage', detail: err.message });
   }
 });
 

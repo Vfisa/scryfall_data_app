@@ -10,11 +10,12 @@ both markets.
 - **Browse** — filterable grid over all cards (set, rarity, color identity,
   artist, type, TCGPlayer grade, card variant), free-text search, sort by
   name / price TCG / price 401 / rarity / collector #.
-- **Card detail popup** — full art, oracle + flavor text, stats, TCGPlayer
-  sealed-guide grade & commentary, external links (Scryfall / TCGplayer /
-  401 Games / 401 Games Foil), current-price widgets for USD / FOIL / ETCHED
-  TCGP and CAD / CAD FOIL 401, and two **date-synchronized** price-history
-  charts (TCGPlayer + 401).
+- **Card detail popup** — full art, oracle + flavor text, stats, a unified
+  **Notes** section (TCGPlayer sealed-guide grade + commentary and
+  cardgamebase draft tips merged under one subtle block), external links
+  (Scryfall / TCGplayer / 401 Games / 401 Games Foil), current-price
+  widgets for USD / FOIL / ETCHED TCGP and CAD / CAD FOIL 401, and two
+  **date-synchronized** price-history charts (TCGPlayer + 401).
 - **TCGPlayer analytics tab** — market overview, total-market-value trend,
   top movers, price distribution, price trends by rarity & by set, rarity
   breakdown, most-valuable cards table, top artists by portfolio value.
@@ -96,6 +97,16 @@ load degrades gracefully).
 | `Collector_Number` | Join key |
 | `Usability_Tier` | Grade shown in card popup + grade filter |
 | `Contextual_Commentary_from_Article` | Commentary shown in popup |
+
+### `out.c-scryfall.strixhaven_tips_with_set`
+Per-card draft tips sourced from cardgamebase (optional; degrades
+gracefully). Up to four tips per card.
+
+| Column | Used for |
+|---|---|
+| `set` | Join key (lowercased, composite with `collector_number`) |
+| `collector_number` | Join key |
+| `tip_1`, `tip_2`, `tip_3`, `tip_4` | Tip strings; empty values are skipped. Rendered in the card popup's Notes section |
 
 ### `in.c-401games.card_prices`
 Raw scraped 401 Games prices — one row per product per scrape timestamp.
