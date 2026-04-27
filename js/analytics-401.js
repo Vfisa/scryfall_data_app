@@ -7,6 +7,7 @@ const Analytics401Module = (() => {
   let valuableSortDir = 'desc';
 
   const CURRENCY = 'C$';
+  const USD_TO_CAD = 1.4;
   const RARITY_ORDER = ['common', 'uncommon', 'rare', 'mythic'];
   const RARITY_COLORS = {
     common: '#71717a', uncommon: '#94a3b8', rare: '#d4a932', mythic: '#ef4444',
@@ -67,6 +68,7 @@ const Analytics401Module = (() => {
     renderRarityDonut(cards, opts);
     renderRarityBar(cards, opts);
     renderValuableTable(cards, opts);
+    renderValueComparison(cards, opts);
   }
 
   function getFilterOpts() {
@@ -573,6 +575,60 @@ const Analytics401Module = (() => {
         if (!isNaN(idx) && allCards[idx]) ModalModule.open(allCards[idx]);
       });
     });
+  }
+
+  // ===== Section 7: 401 vs TCGPlayer (×1.4 fair value) =====
+  function renderValueComparison(cards, opts) {
+    const isFoil = opts.priceType === 'cad_foil';
+    const cadField = isFoil ? 'price_401_cad_foil' : 'price_401_cad';
+    const usdField = isFoil ? 'prices_usd_foil' : 'prices_usd';
+
+    const rows = [];
+    cards.forEach(c => {
+      const cad = parseFloat(c[cadField]) || 0;
+      const usd = parseFloat(c[usdField]) || 0;
+      if (cad <= 0 || usd <= 0) return;
+      const fairCad = usd * USD_TO_CAD;
+      const delta = cad - fairCad;            // negative → 401 cheaper than fair → undervalued
+      const pct = (delta / fairCad) * 100;
+      rows.push({ card: c, cad, usd, fairCad, delta, pct });
+    });
+
+    // Sort by absolute CAD delta (not percentage):
+    // undervalued = biggest negative delta (cheapest 401 vs fair) first.
+    const undervalued = [...rows].sort((a, b) => a.delta - b.delta).slice(0, 20);
+    // overpriced = biggest positive delta (most-marked-up 401 vs fair) first.
+    const overpriced = [...rows].sort((a, b) => b.delta - a.delta).slice(0, 20);
+
+    document.getElementById('undervalued-401').innerHTML = buildValueTable(undervalued, true);
+    document.getElementById('overpriced-401').innerHTML = buildValueTable(overpriced, false);
+
+    document.querySelectorAll('#undervalued-401 .mover-name-link, #overpriced-401 .mover-name-link').forEach(el => {
+      el.addEventListener('click', e => {
+        e.preventDefault();
+        const idx = parseInt(el.dataset.cardIdx);
+        if (!isNaN(idx) && allCards[idx]) ModalModule.open(allCards[idx]);
+      });
+    });
+  }
+
+  function buildValueTable(items, isUndervalued) {
+    if (!items.length) return '<div class="no-data">No paired prices for current filters</div>';
+    // Undervalued = good buys → green; Overpriced = bad buys → red.
+    const cls = isUndervalued ? 'gain' : 'loss';
+    const sign = isUndervalued ? '' : '+';
+    const rows = items.map(it => {
+      const c = it.card;
+      const img = c.image_small || c.image_normal || '';
+      const cardIdx = allCards.indexOf(c);
+      return `<tr>
+        <td><img class="mover-thumb" src="${img}" alt="" loading="lazy"></td>
+        <td><a href="#" class="mover-name-link" data-card-idx="${cardIdx}">${c.name}</a><br><span class="mover-set">${c.set_name} &middot; <span class="rarity-badge rarity-${c.rarity}">${c.rarity}</span></span></td>
+        <td class="mover-prices">$${it.usd.toFixed(2)} &rarr; ${CURRENCY}${it.fairCad.toFixed(2)}<br><small>401: ${CURRENCY}${it.cad.toFixed(2)}</small></td>
+        <td class="mover-change ${cls}">${sign}${CURRENCY}${it.delta.toFixed(2)}<br><small>${sign}${it.pct.toFixed(1)}%</small></td>
+      </tr>`;
+    }).join('');
+    return `<table class="movers-table"><tbody>${rows}</tbody></table>`;
   }
 
   // ===== Helpers =====
