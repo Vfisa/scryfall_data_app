@@ -128,16 +128,23 @@ const Analytics401Module = (() => {
     return getPrice(card, opts);
   }
 
+  // 401 prices are sticky (hold flat for days, then jump), so a "yesterday vs today"
+  // delta misses real movement. Compare latest non-zero vs earliest non-zero in the
+  // available history → captures movement over the full visible window.
   function getPriceChange(card, opts) {
     const hist = getHistory(card);
     if (hist.length < 2) return null;
 
-    let curr = 0, prev = 0, foundCurr = false;
+    let curr = 0, prev = 0;
     for (let i = hist.length - 1; i >= 0; i--) {
       const v = hist[i][opts.snapshotField];
       const n = v === null || v === undefined ? 0 : parseFloat(v) || 0;
-      if (n > 0 && !foundCurr) { curr = n; foundCurr = true; }
-      else if (n > 0 && foundCurr) { prev = n; break; }
+      if (n > 0) { curr = n; break; }
+    }
+    for (let i = 0; i < hist.length; i++) {
+      const v = hist[i][opts.snapshotField];
+      const n = v === null || v === undefined ? 0 : parseFloat(v) || 0;
+      if (n > 0) { prev = n; break; }
     }
 
     if (prev === 0 || curr === 0) return null;
